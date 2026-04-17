@@ -1,6 +1,7 @@
+import fs from "node:fs/promises";
 import path from "node:path";
 import { ensureDir, pathExists } from "../lib/fs-utils";
-import { resolveAgentControlRoot, normalizeProjectPath } from "../lib/paths";
+import { resolveAgentControlRoot, resolveLegacyAgentRoot, normalizeProjectPath, HELM_AGENT_DIR_NAME, LEGACY_AGENT_DIR_NAME } from "../lib/paths";
 import { materializePack } from "../lib/pack-loader";
 import { validateProject } from "../lib/validate";
 import { loadYamlFile, writeYamlFile } from "../lib/yaml-config";
@@ -10,11 +11,21 @@ import { runWorkflow } from "./run-workflow";
 export async function installAgent(target: string, options: { force?: boolean; runBaseline?: boolean; pack?: string }): Promise<void> {
   const repoRoot = path.resolve(target);
   const agentControlRoot = resolveAgentControlRoot(repoRoot);
+  const legacyAgentRoot = resolveLegacyAgentRoot(repoRoot);
   const packName = options.pack ?? "default";
 
-  if (await pathExists(agentControlRoot)) {
+  const existingPreferred = await pathExists(agentControlRoot);
+  const existingLegacy = await pathExists(legacyAgentRoot);
+  if (existingPreferred || existingLegacy) {
     if (!options.force) {
-      throw new Error(`agent-control already exists at ${agentControlRoot}. Use --force to overwrite.`);
+      const existingRoot = existingPreferred ? agentControlRoot : legacyAgentRoot;
+      throw new Error(`${HELM_AGENT_DIR_NAME} already exists at ${existingRoot}. Use --force to overwrite.`);
+    }
+    if (existingPreferred) {
+      await fs.rm(agentControlRoot, { recursive: true, force: true });
+    }
+    if (existingLegacy) {
+      await fs.rm(legacyAgentRoot, { recursive: true, force: true });
     }
   }
 

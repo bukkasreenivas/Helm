@@ -25,7 +25,7 @@ async function createWorkflowRepo(workflowYaml: WorkflowConfig): Promise<{ repoR
   tempRoots.push(tempRoot);
 
   const repoRoot = path.join(tempRoot, "repo");
-  const agentControlRoot = path.join(repoRoot, "agent-control");
+  const agentControlRoot = path.join(repoRoot, "helm-agent");
   await fs.mkdir(repoRoot, { recursive: true });
   await materializePack("default", agentControlRoot);
 
@@ -77,7 +77,7 @@ describe("run-workflow: on_failure routing", () => {
       runWorkflow(repoRoot, { feature: "test-feature", workflow: "simple-pass", skipValidate: true }),
     ).resolves.toBeUndefined();
 
-    const runRoot = path.join(repoRoot, "agent-control", "runs");
+    const runRoot = path.join(repoRoot, "helm-agent", "runs");
     const runs = await fs.readdir(runRoot);
     expect(runs.length).toBe(1);
     const runDir = path.join(runRoot, runs[0]);
@@ -152,7 +152,7 @@ describe("run-workflow: on_failure routing", () => {
       runWorkflow(repoRoot, { feature: "test-feature", workflow: "fail-route", skipValidate: true }),
     ).resolves.toBeUndefined();
 
-    const runRoot = path.join(repoRoot, "agent-control", "runs");
+    const runRoot = path.join(repoRoot, "helm-agent", "runs");
     const runs = await fs.readdir(runRoot);
     // There should be exactly one run folder and it should match our workflow + feature.
     const matchingRuns = runs.filter((r) => r.includes("fail-route") && r.includes("test-feature"));

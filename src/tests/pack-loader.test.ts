@@ -29,7 +29,7 @@ describe("pack-loader", () => {
   it("materializes merged config and override skills", async () => {
     const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-pack-"));
     tempRoots.push(tempRoot);
-    const destination = path.join(tempRoot, "agent-control");
+    const destination = path.join(tempRoot, "helm-agent");
 
     await materializePack("webapp", destination);
 
@@ -66,13 +66,17 @@ describe("pack-loader", () => {
 
     await updateAgent(repoRoot);
 
-    const updatedManifest = await loadYamlFile<ManifestConfig>(manifestPath);
-    const updatedModels = await loadYamlFile<{ schema_version: number; roles: Record<string, string> }>(modelsPath);
+    const migratedRoot = path.join(repoRoot, "helm-agent");
+
+    const updatedManifest = await loadYamlFile<ManifestConfig>(path.join(migratedRoot, "manifest.yaml"));
+    const updatedModels = await loadYamlFile<{ schema_version: number; roles: Record<string, string> }>(path.join(migratedRoot, "models.yaml"));
 
     expect(updatedManifest.project_id).toBe("custom-project");
     expect(updatedManifest.project_name).toBe("Custom Project");
     expect(updatedManifest.root_path).toBe(repoRoot);
     expect(updatedManifest.pack_name).toBe("default");
+    expect(updatedManifest.run_artifact_root).toBe("helm-agent/runs");
     expect(updatedModels.roles.architect).toBe("gpt-5.4");
+    await expect(fs.access(path.join(repoRoot, "agent-control"))).rejects.toThrow();
   });
 });

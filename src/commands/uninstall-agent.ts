@@ -2,15 +2,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { pathExists } from "../lib/fs-utils";
 import { resolveAgentControlRoot } from "../lib/paths";
-import { loadYamlFile } from "../lib/yaml-config";
+import { loadYamlFile, resolveInstalledAgentRoot } from "../lib/yaml-config";
 import type { ManifestConfig } from "../lib/types";
 
 export async function uninstallAgent(target: string, options: { purgeRuns?: boolean }): Promise<void> {
   const repoRoot = path.resolve(target);
-  const agentControlRoot = resolveAgentControlRoot(repoRoot);
+  const agentControlRoot = await resolveInstalledAgentRoot(repoRoot);
 
   if (!(await pathExists(agentControlRoot))) {
-    throw new Error(`Cannot uninstall because agent-control does not exist in ${repoRoot}`);
+    throw new Error(`Cannot uninstall because helm-agent does not exist in ${repoRoot}`);
   }
 
   let runArtifactRoot: string | undefined;

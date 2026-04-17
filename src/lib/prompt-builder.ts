@@ -1,7 +1,7 @@
 import path from "node:path";
 import { getArtifactTemplate } from "./template-map";
 import { readTextFile, pathExists } from "./fs-utils";
-import { normalizeProjectPath } from "./paths";
+import { HELM_AGENT_DIR_NAME, LEGACY_AGENT_DIR_NAME, normalizeProjectPath } from "./paths";
 import { scanRepository } from "./repo-scan";
 import type { LoadedProjectConfig, WorkflowConfig, WorkflowStage } from "./types";
 
@@ -79,7 +79,7 @@ async function gatherBaselineSummary(config: LoadedProjectConfig, workflow: Work
   }
 
   const summary = await scanRepository(config.repoRoot, {
-    ignoreRelativeRoots: ["agent-control", config.manifest.run_artifact_root, config.manifest.technical_doc_root, config.manifest.review_doc_root, config.manifest.product_doc_root],
+    ignoreRelativeRoots: [HELM_AGENT_DIR_NAME, LEGACY_AGENT_DIR_NAME, config.manifest.run_artifact_root, config.manifest.technical_doc_root, config.manifest.review_doc_root, config.manifest.product_doc_root],
   });
 
   return [

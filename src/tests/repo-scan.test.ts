@@ -16,15 +16,15 @@ describe("repo-scan", () => {
     tempRoots.push(tempRoot);
 
     await fs.mkdir(path.join(tempRoot, "docs", "technical"), { recursive: true });
-    await fs.mkdir(path.join(tempRoot, "agent-control", "runs"), { recursive: true });
+    await fs.mkdir(path.join(tempRoot, "helm-agent", "runs"), { recursive: true });
     await fs.mkdir(path.join(tempRoot, "platform"), { recursive: true });
     await fs.writeFile(path.join(tempRoot, "README.md"), "# Root");
     await fs.writeFile(path.join(tempRoot, "docs", "technical", "project_overview.md"), "generated");
-    await fs.writeFile(path.join(tempRoot, "agent-control", "runs", "artifact.md"), "run");
+    await fs.writeFile(path.join(tempRoot, "helm-agent", "runs", "artifact.md"), "run");
     await fs.writeFile(path.join(tempRoot, "platform", "service.csproj"), "<Project />");
 
     const summary = await scanRepository(tempRoot, {
-      ignoreRelativeRoots: ["agent-control", "docs/technical"],
+      ignoreRelativeRoots: ["helm-agent", "docs/technical"],
     });
 
     expect(summary.markdownFiles).toEqual(["README.md"]);

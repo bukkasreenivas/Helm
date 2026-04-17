@@ -14,7 +14,7 @@ local_urls:
 important_files:
   - README.md
 optional_supplements: []
-run_artifact_root: agent-control/runs
+run_artifact_root: helm-agent/runs
 technical_doc_root: docs/technical
 review_doc_root: docs/code-review
 product_doc_root: docs/product

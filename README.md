@@ -35,7 +35,7 @@ node dist/cli.js install-agent --target <repo> --pack webapp --run-baseline
 
 What this does:
 
-- creates `agent-control/` in the target repository
+- creates `helm-agent/` in the target repository
 - writes pack config files, workflows, skills, and templates
 - creates durable output folders defined by the manifest
 - optionally runs the `project-baseline` workflow
@@ -64,7 +64,7 @@ Remove Helm and its run artifacts:
 node dist/cli.js uninstall-agent --target <repo> --purge-runs
 ```
 
-Uninstall removes `agent-control/`. By design, durable docs such as `docs/technical`, `docs/code-review`, and `docs/product` are left alone unless you remove them yourself.
+Uninstall removes `helm-agent/`. By design, durable docs such as `docs/technical`, `docs/code-review`, and `docs/product` are left alone unless you remove them yourself.
 
 ## Validate
 
@@ -103,7 +103,7 @@ Built-in workflows:
 
 Model execution behavior:
 
-- Helm uses the role-to-model mapping in `agent-control/models.yaml`
+- Helm uses the role-to-model mapping in `helm-agent/models.yaml`
 - fallback models are used when the primary model fails
 - set `HELM_MOCK_MODE=true` to run with the built-in mock adapter for local validation
 - provider API keys are required for real model execution: `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and `GOOGLE_API_KEY` depending on configured models
@@ -126,7 +126,7 @@ Model execution behavior:
 ## Pack layout
 
 Helm ships a default pack under `packs/default/` and a generic sample override pack under `packs/webapp/`.
-When installed into a consumer repo, the pack is copied into `agent-control/` while durable project documentation remains outside that folder.
+When installed into a consumer repo, the pack is copied into `helm-agent/` while durable project documentation remains outside that folder.
 
 ## Implementation status
 
@@ -143,8 +143,6 @@ Implemented now:
 Still missing or shallow:
 
 - stage execution generates artifacts, but it does not directly modify application code in the target repo
-- test and validation command failures are captured in artifacts, but they do not yet stop the workflow or honor `on_failure` routing automatically
-- downstream stages currently receive artifacts only from direct `depends_on` stages, which can omit broader run context for review and release stages
 - no packaged release flow yet beyond local build and git publishing
 - no provider-specific retry, rate-limit handling, or resume support
 - no end-to-end tests against real provider APIs
@@ -152,5 +150,3 @@ Still missing or shallow:
 ## Known limitations
 
 - `parallel_group` is advisory only right now; stages still execute sequentially
-- workflow failure routing is declared in pack YAML, but the runner does not yet branch or stop based on stage command failure
-- prompt context is dependency-scoped rather than full-history scoped, which reduces noise but can hide earlier artifacts from later stages

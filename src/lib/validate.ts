@@ -81,7 +81,7 @@ export async function validateProject(repoRoot: string): Promise<ValidationResul
   for (const docRootKey of ["technical_doc_root", "review_doc_root", "product_doc_root"] as const) {
     const absoluteDocRoot = normalizeProjectPath(config.repoRoot, config.manifest[docRootKey]);
     if (absoluteDocRoot.startsWith(config.agentControlRoot)) {
-      warnings.push(`${docRootKey} points inside agent-control and will be removed on uninstall: ${config.manifest[docRootKey]}`);
+      warnings.push(`${docRootKey} points inside helm-agent and will be removed on uninstall: ${config.manifest[docRootKey]}`);
     }
   }
 

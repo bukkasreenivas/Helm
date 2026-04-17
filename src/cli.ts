@@ -19,7 +19,7 @@ async function main(): Promise<void> {
     .command("install-agent")
     .requiredOption("--target <path>", "Path to the consumer repository")
     .option("--pack <name>", "Pack name to install", "default")
-    .option("--force", "Overwrite an existing agent-control folder")
+    .option("--force", "Overwrite an existing helm-agent folder")
     .option("--run-baseline", "Run the project-baseline workflow after install")
     .action(async (options) => installAgent(options.target, { force: Boolean(options.force), runBaseline: Boolean(options.runBaseline), pack: options.pack }));
 
