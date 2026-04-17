@@ -1,0 +1,131 @@
+schema_version: 1
+workflow_id: enhancement
+description: Architecture-first implementation flow with development, testing, review, product documentation, and release validation.
+stages:
+  - id: orchestrate
+    role: orchestrator
+    depends_on: []
+    parallel_group: null
+    required_artifacts: []
+    output_target: run_artifact_root
+    success_criteria:
+      - Project manifest loaded
+      - Roles resolved to models
+      - Context bundle prepared
+    on_failure: stop
+  - id: architecture
+    role: architect
+    depends_on:
+      - orchestrate
+    parallel_group: null
+    required_artifacts:
+      - architecture
+    output_target: technical_doc_root
+    success_criteria:
+      - Architecture document created
+      - Backend, frontend, testing, and review scope identified
+    on_failure: stop
+  - id: backend_implementation
+    role: backend_dev
+    depends_on:
+      - architecture
+    parallel_group: implementation
+    required_artifacts:
+      - implementation-notes
+    output_target: run_artifact_root
+    success_criteria:
+      - Backend changes completed
+    on_failure: stop
+  - id: frontend_implementation
+    role: frontend_dev
+    depends_on:
+      - architecture
+    parallel_group: implementation
+    required_artifacts:
+      - implementation-notes
+    output_target: run_artifact_root
+    success_criteria:
+      - Frontend changes completed
+    on_failure: stop
+  - id: backend_testing
+    role: backend_tester
+    depends_on:
+      - backend_implementation
+    parallel_group: testing
+    required_artifacts:
+      - backend-test-report
+    output_target: technical_doc_root
+    success_criteria:
+      - Backend tests updated
+      - Backend test command passes
+    on_failure: route_to_fixer
+  - id: ui_testing
+    role: ui_tester
+    depends_on:
+      - frontend_implementation
+    parallel_group: testing
+    required_artifacts:
+      - ui-test-report
+    output_target: technical_doc_root
+    success_criteria:
+      - UI tests updated
+      - UI test command passes
+    on_failure: route_to_fixer
+  - id: code_review
+    role: reviewer
+    depends_on:
+      - backend_testing
+      - ui_testing
+    parallel_group: null
+    required_artifacts:
+      - code-review
+    output_target: review_doc_root
+    success_criteria:
+      - Review findings documented
+    on_failure: stop
+  - id: backend_fix
+    role: backend_fixer
+    depends_on:
+      - code_review
+    parallel_group: fix
+    required_artifacts:
+      - fix-summary
+    output_target: run_artifact_root
+    success_criteria:
+      - Backend findings addressed
+    on_failure: stop
+  - id: frontend_fix
+    role: frontend_fixer
+    depends_on:
+      - code_review
+    parallel_group: fix
+    required_artifacts:
+      - fix-summary
+    output_target: run_artifact_root
+    success_criteria:
+      - Frontend findings addressed
+    on_failure: stop
+  - id: product_documentation
+    role: product_doc_writer
+    depends_on:
+      - backend_fix
+      - frontend_fix
+    parallel_group: null
+    required_artifacts:
+      - product-doc
+    output_target: product_doc_root
+    success_criteria:
+      - User-facing product documentation created or updated
+    on_failure: stop
+  - id: release_validation
+    role: release_validator
+    depends_on:
+      - product_documentation
+    parallel_group: null
+    required_artifacts:
+      - release-validation
+    output_target: technical_doc_root
+    success_criteria:
+      - Critical flows validated
+      - Product documentation exists
+    on_failure: stop

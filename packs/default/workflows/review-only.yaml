@@ -1,0 +1,24 @@
+schema_version: 1
+workflow_id: review-only
+description: Review-only workflow for auditing an existing feature or change.
+stages:
+  - id: orchestrate
+    role: orchestrator
+    depends_on: []
+    parallel_group: null
+    required_artifacts: []
+    output_target: run_artifact_root
+    success_criteria:
+      - Review scope prepared
+    on_failure: stop
+  - id: review
+    role: reviewer
+    depends_on:
+      - orchestrate
+    parallel_group: null
+    required_artifacts:
+      - code-review
+    output_target: review_doc_root
+    success_criteria:
+      - Review findings documented
+    on_failure: stop

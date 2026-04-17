@@ -1,0 +1,83 @@
+schema_version: 1
+roles:
+  orchestrator:
+    skills:
+      - skills/orchestrator-core.md
+    reads_project_files: true
+    writes_artifacts:
+      - run-summary
+  architect:
+    skills:
+      - skills/project-baseline-review.md
+      - skills/multi-solution-impact-analysis.md
+      - skills/architect-core.md
+      - skills/system-design.md
+    reads_project_files: true
+    writes_artifacts:
+      - architecture
+      - project-overview
+      - solution-map
+      - dependency-map
+      - skill-recommendation
+  backend_dev:
+    skills:
+      - skills/backend-dotnet-core.md
+      - skills/database-postgres-pgvector.md
+    reads_project_files: true
+    writes_artifacts:
+      - implementation-notes
+  frontend_dev:
+    skills:
+      - skills/frontend-angular.md
+      - skills/frontend-ui-design.md
+    reads_project_files: true
+    writes_artifacts:
+      - implementation-notes
+  backend_tester:
+    skills:
+      - skills/backend-testing-dotnet.md
+      - skills/database-postgres-pgvector.md
+    reads_project_files: true
+    writes_artifacts:
+      - backend-test-report
+  ui_tester:
+    skills:
+      - skills/ui-testing-playwright.md
+    reads_project_files: true
+    writes_artifacts:
+      - ui-test-report
+  reviewer:
+    skills:
+      - skills/code-review-security.md
+      - skills/code-review-regression.md
+    reads_project_files: true
+    writes_artifacts:
+      - code-review
+  backend_fixer:
+    skills:
+      - skills/backend-dotnet-core.md
+      - skills/database-postgres-pgvector.md
+      - skills/fix-loop.md
+    reads_project_files: true
+    writes_artifacts:
+      - fix-summary
+  frontend_fixer:
+    skills:
+      - skills/frontend-angular.md
+      - skills/frontend-ui-design.md
+      - skills/fix-loop.md
+    reads_project_files: true
+    writes_artifacts:
+      - fix-summary
+  product_doc_writer:
+    skills:
+      - skills/product-doc-user-facing.md
+    reads_project_files: true
+    writes_artifacts:
+      - product-doc
+  release_validator:
+    skills:
+      - skills/release-validation.md
+    reads_project_files: true
+    writes_artifacts:
+      - release-validation

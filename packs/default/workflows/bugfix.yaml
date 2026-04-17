@@ -1,0 +1,57 @@
+schema_version: 1
+workflow_id: bugfix
+description: Lightweight bugfix workflow with targeted implementation, testing, review, and validation.
+stages:
+  - id: orchestrate
+    role: orchestrator
+    depends_on: []
+    parallel_group: null
+    required_artifacts: []
+    output_target: run_artifact_root
+    success_criteria:
+      - Bugfix scope prepared
+    on_failure: stop
+  - id: architecture
+    role: architect
+    depends_on:
+      - orchestrate
+    parallel_group: null
+    required_artifacts:
+      - architecture
+    output_target: technical_doc_root
+    success_criteria:
+      - Bugfix approach documented
+    on_failure: stop
+  - id: implementation
+    role: backend_dev
+    depends_on:
+      - architecture
+    parallel_group: null
+    required_artifacts:
+      - implementation-notes
+    output_target: run_artifact_root
+    success_criteria:
+      - Bugfix implemented
+    on_failure: stop
+  - id: testing
+    role: backend_tester
+    depends_on:
+      - implementation
+    parallel_group: null
+    required_artifacts:
+      - backend-test-report
+    output_target: technical_doc_root
+    success_criteria:
+      - Relevant tests pass
+    on_failure: route_to_fixer
+  - id: review
+    role: reviewer
+    depends_on:
+      - testing
+    parallel_group: null
+    required_artifacts:
+      - code-review
+    output_target: review_doc_root
+    success_criteria:
+      - Bugfix reviewed
+    on_failure: stop

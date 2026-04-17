@@ -1,0 +1,30 @@
+{
+  "name": "helm-agent-control",
+  "version": "0.1.0",
+  "description": "Helm is a standalone agent control plane for configuring multi-model workflows, skills, and durable project artifacts.",
+  "bin": {
+    "helm": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/cli.js",
+    "dev": "node dist/cli.js"
+  },
+  "keywords": [
+    "agents",
+    "workflow",
+    "control-plane",
+    "ai",
+    "developer-tools"
+  ],
+  "author": "bukkasreenivas",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^13.1.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.2",
+    "typescript": "^5.8.3"
+  }
+}

@@ -1,0 +1,38 @@
+schema_version: 1
+workflow_id: project-baseline
+description: Repository-wide baseline discovery, stack identification, solution mapping, dependency mapping, and skill recommendations.
+stages:
+  - id: baseline_orchestrate
+    role: orchestrator
+    depends_on: []
+    parallel_group: null
+    required_artifacts:
+      - run-summary
+    output_target: run_artifact_root
+    success_criteria:
+      - Baseline workflow initialized
+    on_failure: stop
+  - id: baseline_review
+    role: architect
+    depends_on:
+      - baseline_orchestrate
+    parallel_group: null
+    required_artifacts:
+      - project-overview
+      - solution-map
+      - dependency-map
+    output_target: technical_doc_root
+    success_criteria:
+      - Durable repo overview created
+    on_failure: stop
+  - id: baseline_skill_recommendation
+    role: architect
+    depends_on:
+      - baseline_review
+    parallel_group: null
+    required_artifacts:
+      - skill-recommendation
+    output_target: technical_doc_root
+    success_criteria:
+      - Recommendation-driven skill tuning captured
+    on_failure: stop

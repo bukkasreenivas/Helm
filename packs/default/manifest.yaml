@@ -1,0 +1,46 @@
+schema_version: 1
+project_id: sample-project
+project_name: Sample Project
+root_path: C:/path/to/repo
+default_workflow: enhancement
+startup_command: docker-compose -f docker-compose.dev.yml up -d
+shutdown_command: docker-compose -f docker-compose.dev.yml down
+backend_test_command: dotnet test
+frontend_test_command: npm test
+ui_e2e_test_command: npx playwright test
+local_urls:
+  frontend: http://localhost:4200
+  backend: http://localhost:8080
+important_files:
+  - README.md
+optional_supplements: []
+run_artifact_root: agent-control/runs
+technical_doc_root: docs/technical
+review_doc_root: docs/code-review
+product_doc_root: docs/product
+retain_test_reports: true
+product_doc_required: true
+product_doc_template: templates/product-doc.md
+repo_scan_mode: full_repo
+repo_scan_roots:
+  - .
+solution_files: []
+subsystems: {}
+cross_solution_changes_expected: false
+architecture_scope_default: repo
+workflow_overrides: {}
+role_overrides: {}
+skill_overrides: {}
+environment_notes: []
+enabled_roles:
+  - orchestrator
+  - architect
+  - backend_dev
+  - frontend_dev
+  - backend_tester
+  - ui_tester
+  - reviewer
+  - backend_fixer
+  - frontend_fixer
+  - product_doc_writer
+  - release_validator

@@ -1,0 +1,19 @@
+schema_version: 1
+roles:
+  orchestrator: gpt-5.4
+  architect: gpt-5.4
+  backend_dev: haiku-4.6
+  frontend_dev: gemini-3.1-pro
+  backend_tester: haiku-4.6
+  ui_tester: gemini-3.1-pro
+  reviewer: sonnet-4.6
+  backend_fixer: haiku-4.6
+  frontend_fixer: haiku-4.6
+  product_doc_writer: gpt-5.4
+  release_validator: sonnet-4.6
+fallbacks:
+  architect: sonnet-4.6
+  frontend_dev: sonnet-4.6
+  ui_tester: sonnet-4.6
+  reviewer: gpt-5.4
+  product_doc_writer: sonnet-4.6
