@@ -1,7 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { pathExists } from "../lib/fs-utils";
-import { resolveAgentControlRoot } from "../lib/paths";
 import { loadYamlFile, resolveInstalledAgentRoot } from "../lib/yaml-config";
 import type { ManifestConfig } from "../lib/types";
 
