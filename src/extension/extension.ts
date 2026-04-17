@@ -46,6 +46,159 @@ function patchConsoleToChannel(output: vscode.OutputChannel): () => void {
 }
 
 // ---------------------------------------------------------------------------
+// Chat participant
+// ---------------------------------------------------------------------------
+
+/**
+ * Supported @helm chat commands:
+ *   @helm run <workflow> for <feature>
+ *   @helm run <feature>                (uses default workflow)
+ *   @helm install [pack]
+ *   @helm validate
+ *   @helm update
+ *   @helm help
+ *
+ * Examples:
+ *   @helm run enhancement for add-payment-gateway
+ *   @helm run bugfix for login-redirect-issue
+ *   @helm run for add-dark-mode
+ */
+function parseChatRequest(userText: string): { intent: string; workflow?: string; feature?: string; pack?: string } {
+  const text = userText.trim().toLowerCase();
+
+  // run [workflow] for <feature>
+  const runWithWorkflow = /^run\s+(\S+)\s+for\s+(.+)$/i.exec(userText.trim());
+  if (runWithWorkflow) {
+    return { intent: "run", workflow: runWithWorkflow[1].toLowerCase(), feature: runWithWorkflow[2].trim() };
+  }
+
+  // run for <feature>  — default workflow
+  const runDefault = /^run\s+for\s+(.+)$/i.exec(userText.trim());
+  if (runDefault) {
+    return { intent: "run", feature: runDefault[1].trim() };
+  }
+
+  // run <feature>  — no workflow keyword, treat the rest as feature label
+  const runFeatureOnly = /^run\s+(.+)$/i.exec(userText.trim());
+  if (runFeatureOnly) {
+    return { intent: "run", feature: runFeatureOnly[1].trim() };
+  }
+
+  if (text.startsWith("install")) {
+    const parts = text.split(/\s+/);
+    return { intent: "install", pack: parts[1] };
+  }
+  if (text.startsWith("validate")) return { intent: "validate" };
+  if (text.startsWith("update")) return { intent: "update" };
+  if (text.startsWith("uninstall")) return { intent: "uninstall" };
+
+  return { intent: "help" };
+}
+
+function registerChatParticipant(
+  context: vscode.ExtensionContext,
+  output: vscode.OutputChannel,
+): void {
+  const handler: vscode.ChatRequestHandler = async (
+    request: vscode.ChatRequest,
+    _chatContext: vscode.ChatContext,
+    stream: vscode.ChatResponseStream,
+    _token: vscode.CancellationToken,
+  ): Promise<void> => {
+    const parsed = parseChatRequest(request.prompt);
+    const target = getWorkspaceRoot();
+
+    if (!target) {
+      stream.markdown("No workspace folder is open. Open your project folder in VS Code first.");
+      return;
+    }
+
+    const restore = patchConsoleToChannel(output);
+
+    try {
+      switch (parsed.intent) {
+        case "run": {
+          if (!parsed.feature) {
+            stream.markdown(
+              "Please provide a feature label. Example:\n```\n@helm run enhancement for add-payment-gateway\n```",
+            );
+            return;
+          }
+          stream.markdown(
+            `Running **${parsed.workflow ?? "default"}** workflow for **${parsed.feature}**…\n\nProgress is shown in the *Helm Agent* output channel.`,
+          );
+          output.show(true);
+          await runWorkflow(target, {
+            workflow: parsed.workflow,
+            feature: parsed.feature,
+            dryRun: false,
+          });
+          stream.markdown(`Workflow completed. Check the *Helm Agent* output channel and the \`helm-agent/runs\` folder for artifacts.`);
+          break;
+        }
+
+        case "install": {
+          stream.markdown(`Installing Helm agent (pack: **${parsed.pack ?? "default"}**)…`);
+          output.show(true);
+          await installAgent(target, { pack: parsed.pack ?? "default", force: false, runBaseline: false });
+          stream.markdown("Agent installed. Run `@helm validate` to confirm.");
+          break;
+        }
+
+        case "validate": {
+          stream.markdown("Validating Helm agent configuration…");
+          await validateAgent(target);
+          stream.markdown("Validation passed.");
+          break;
+        }
+
+        case "update": {
+          stream.markdown("Updating Helm agent pack…");
+          output.show(true);
+          await updateAgent(target);
+          stream.markdown("Agent updated.");
+          break;
+        }
+
+        case "uninstall": {
+          stream.markdown("Uninstalling Helm agent…");
+          await uninstallAgent(target, { purgeRuns: false });
+          stream.markdown("Agent uninstalled. Run artifacts were left in place.");
+          break;
+        }
+
+        default: {
+          stream.markdown(
+            [
+              "**Helm Agent** — available commands:",
+              "",
+              "| Command | What it does |",
+              "|---|---|",
+              "| `@helm run <feature>` | Run the default workflow |",
+              "| `@helm run <workflow> for <feature>` | Run a specific workflow |",
+              "| `@helm install [pack]` | Install the Helm agent in this workspace |",
+              "| `@helm validate` | Check the agent configuration |",
+              "| `@helm update` | Update the agent pack to the latest version |",
+              "| `@helm uninstall` | Remove the agent from this workspace |",
+              "",
+              "**Example workflows:** `enhancement`, `bugfix`, `review-only`, `project-baseline`",
+            ].join("\n"),
+          );
+        }
+      }
+    } catch (err) {
+      stream.markdown(`**Error:** ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      restore();
+    }
+  };
+
+  const participant = vscode.chat.createChatParticipant("helm.agent", handler);
+  participant.iconPath = new vscode.ThemeIcon("rocket");
+  context.subscriptions.push(participant);
+}
+
+// ---------------------------------------------------------------------------
 // Extension activation
 // ---------------------------------------------------------------------------
 
@@ -56,6 +209,9 @@ export function activate(context: vscode.ExtensionContext): void {
 
   const output = vscode.window.createOutputChannel("Helm Agent");
   context.subscriptions.push(output);
+
+  // Register the @helm Copilot Chat participant.
+  registerChatParticipant(context, output);
 
   // ---- helm.installAgent --------------------------------------------------
   context.subscriptions.push(

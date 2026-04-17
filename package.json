@@ -2,7 +2,7 @@
   "name": "helm-agent-control",
   "version": "0.1.0",
   "description": "Helm is a standalone agent control plane for configuring multi-model workflows, skills, and durable project artifacts.",
-  "main": "./dist-ext/extension.js",
+  "main": "./dist-ext/extension/extension.js",
   "bin": {
     "helm": "dist/cli.js"
   },
@@ -18,6 +18,14 @@
     "start": "node dist/cli.js",
     "dev": "node dist/cli.js"
   },
+  "activationEvents": [
+    "onCommand:helm.installAgent",
+    "onCommand:helm.validateAgent",
+    "onCommand:helm.runWorkflow",
+    "onCommand:helm.updateAgent",
+    "onCommand:helm.uninstallAgent",
+    "onChatParticipant:helm.agent"
+  ],
   "contributes": {
     "commands": [
       {
@@ -44,6 +52,15 @@
         "command": "helm.uninstallAgent",
         "title": "Helm: Uninstall Agent",
         "category": "Helm"
+      }
+    ],
+    "chatParticipants": [
+      {
+        "id": "helm.agent",
+        "name": "helm",
+        "fullName": "Helm Agent",
+        "description": "Run Helm agent workflows from Copilot Chat. Try: @helm run enhancement for my-feature",
+        "isSticky": false
       }
     ]
   },
