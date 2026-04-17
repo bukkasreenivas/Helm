@@ -1,0 +1,32 @@
+schema_version: 1
+roles:
+  architect:
+    skills:
+      - skills/project-baseline-review.md
+      - skills/multi-solution-impact-analysis.md
+      - skills/architect-core.md
+      - skills/system-design.md
+      - skills/webapp-delivery-context.md
+    reads_project_files: true
+    writes_artifacts:
+      - architecture
+      - project-overview
+      - solution-map
+      - dependency-map
+      - skill-recommendation
+  backend_dev:
+    skills:
+      - skills/webapp-delivery-context.md
+      - skills/backend-dotnet-core.md
+      - skills/database-postgres-pgvector.md
+    reads_project_files: true
+    writes_artifacts:
+      - implementation-notes
+  frontend_dev:
+    skills:
+      - skills/webapp-delivery-context.md
+      - skills/frontend-angular.md
+      - skills/frontend-ui-design.md
+    reads_project_files: true
+    writes_artifacts:
+      - implementation-notes

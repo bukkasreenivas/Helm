@@ -1,7 +1,11 @@
 import path from "node:path";
 
-export function resolvePackRoot(): string {
-  return path.resolve(__dirname, "..", "..", "packs", "default");
+export function resolvePacksRoot(): string {
+  return path.resolve(__dirname, "..", "..", "packs");
+}
+
+export function resolvePackRoot(packName = "default"): string {
+  return path.join(resolvePacksRoot(), packName);
 }
 
 export function resolveAgentControlRoot(repoRoot: string): string {

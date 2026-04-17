@@ -1,5 +1,16 @@
 node_modules/
 dist/
+dist-ext/
+dist/types/
 *.log
 .DS_Store
 Thumbs.db
+
+# Environment secrets — copy .env.example to .env and fill in values
+.env
+
+# Temporary update backup created by helm update-agent
+.helm-update-backup/
+
+# Packaged VS Code extension
+*.vsix

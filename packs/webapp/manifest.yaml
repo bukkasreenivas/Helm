@@ -1,0 +1,19 @@
+schema_version: 1
+project_id: sample-webapp
+project_name: Sample Web Application
+default_workflow: enhancement
+backend_test_command: npm run test:backend
+frontend_test_command: npm run test:frontend
+ui_e2e_test_command: npx playwright test
+local_urls:
+  frontend: http://localhost:3000
+  backend: http://localhost:8080
+important_files:
+  - README.md
+  - docs/architecture.md
+optional_supplements:
+  - docs/testing.md
+  - docs/deployment.md
+cross_solution_changes_expected: true
+environment_notes:
+  - This sample pack targets a generic multi-tier web application with backend, frontend, and end-to-end testing.

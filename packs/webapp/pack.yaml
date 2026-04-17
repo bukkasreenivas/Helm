@@ -1,0 +1,3 @@
+name: webapp
+extends: default
+description: Generic full-stack web application override pack.

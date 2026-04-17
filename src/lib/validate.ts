@@ -47,7 +47,13 @@ export async function validateProject(repoRoot: string): Promise<ValidationResul
     }
   }
 
-  for (const workflowId of [config.manifest.default_workflow, "project-baseline"]) {
+  // Always validate the default workflow; project-baseline is optional in custom packs.
+  const workflowsToCheck = [config.manifest.default_workflow];
+  if (config.manifest.default_workflow !== "project-baseline") {
+    workflowsToCheck.push("project-baseline");
+  }
+
+  for (const workflowId of workflowsToCheck) {
     try {
       const workflow = await loadWorkflow(config.agentControlRoot, workflowId);
       for (const stage of workflow.stages) {
@@ -56,7 +62,8 @@ export async function validateProject(repoRoot: string): Promise<ValidationResul
         }
       }
     } catch (error) {
-      if (workflowId === config.manifest.default_workflow || workflowId === "project-baseline") {
+      // Only the default workflow is required; project-baseline is optional.
+      if (workflowId === config.manifest.default_workflow) {
         errors.push(`Failed to load workflow '${workflowId}': ${String(error)}`);
       }
     }

@@ -4,20 +4,15 @@
     "module": "Node16",
     "moduleResolution": "Node16",
     "rootDir": "src",
-    "outDir": "dist",
+    "outDir": "dist-ext",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "resolveJsonModule": true,
-    "declaration": true,
-    "declarationDir": "dist/types",
-    "types": ["node"]
+    "declaration": false
   },
   "include": [
     "src/**/*.ts"
-  ],
-  "exclude": [
-    "src/extension/**"
   ]
 }

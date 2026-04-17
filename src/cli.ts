@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { Command } from "commander";
 import { installAgent } from "./commands/install-agent";
+import { uninstallAgent } from "./commands/uninstall-agent";
 import { validateAgent } from "./commands/validate-agent";
 import { runWorkflow } from "./commands/run-workflow";
 import { updateAgent } from "./commands/update-agent";
+import pkg from "../package.json";
 
 async function main(): Promise<void> {
   const program = new Command();
@@ -11,19 +13,26 @@ async function main(): Promise<void> {
   program
     .name("helm")
     .description("Helm: standalone agent control plane")
-    .version("0.1.0");
+    .version(pkg.version);
 
   program
     .command("install-agent")
     .requiredOption("--target <path>", "Path to the consumer repository")
+    .option("--pack <name>", "Pack name to install", "default")
     .option("--force", "Overwrite an existing agent-control folder")
     .option("--run-baseline", "Run the project-baseline workflow after install")
-    .action(async (options) => installAgent(options.target, { force: Boolean(options.force), runBaseline: Boolean(options.runBaseline) }));
+    .action(async (options) => installAgent(options.target, { force: Boolean(options.force), runBaseline: Boolean(options.runBaseline), pack: options.pack }));
 
   program
     .command("validate-agent")
     .requiredOption("--target <path>", "Path to the consumer repository")
     .action(async (options) => validateAgent(options.target));
+
+  program
+    .command("uninstall-agent")
+    .requiredOption("--target <path>", "Path to the consumer repository")
+    .option("--purge-runs", "Also remove the configured run artifact folder")
+    .action(async (options) => uninstallAgent(options.target, { purgeRuns: Boolean(options.purgeRuns) }));
 
   program
     .command("run-workflow")

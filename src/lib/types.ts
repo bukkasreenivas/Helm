@@ -1,5 +1,6 @@
 export interface ManifestConfig {
   schema_version: number;
+  pack_name?: string;
   project_id: string;
   project_name: string;
   root_path: string;
@@ -32,6 +33,12 @@ export interface ManifestConfig {
   enabled_roles?: string[];
 }
 
+export interface PackDefinition {
+  name: string;
+  extends?: string;
+  description?: string;
+}
+
 export interface ModelsConfig {
   schema_version: number;
   roles: Record<string, string>;
@@ -58,7 +65,8 @@ export interface WorkflowStage {
   required_artifacts?: string[];
   output_target?: keyof Pick<ManifestConfig, "run_artifact_root" | "technical_doc_root" | "review_doc_root" | "product_doc_root">;
   success_criteria?: string[];
-  on_failure?: string;
+  /** "stop" — abort the run (default). "route_to_fixer" — run the fixer role for this stage's domain instead. */
+  on_failure?: "stop" | "route_to_fixer";
 }
 
 export interface WorkflowConfig {
@@ -74,6 +82,46 @@ export interface LoadedProjectConfig {
   manifest: ManifestConfig;
   models: ModelsConfig;
   roles: RolesConfig;
+}
+
+export interface StageExecutionResult {
+  stageId: string;
+  role: string;
+  model: string;
+  success: boolean;
+  summary: string;
+  createdArtifacts: string[];
+  warnings: string[];
+  commandOutput?: string;
+}
+
+export interface PromptArtifactTemplate {
+  artifact: string;
+  templatePath?: string;
+  description: string;
+}
+
+export interface ModelExecutionRequest {
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export interface ModelExecutionResponse {
+  text: string;
+  raw?: unknown;
+}
+
+/**
+ * Abstraction over model execution.
+ * The CLI uses the built-in HTTP adapters (OpenAI / Anthropic / Google).
+ * The VS Code extension registers a vscode.lm-backed implementation via
+ * registerModelExecutor() so no API keys are required.
+ */
+export interface IModelExecutor {
+  execute(request: ModelExecutionRequest): Promise<ModelExecutionResponse>;
 }
 
 export interface ValidationResult {
