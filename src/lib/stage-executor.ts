@@ -7,6 +7,19 @@ import { normalizeProjectPath } from "./paths";
 import { runCommand } from "./command-runner";
 import type { LoadedProjectConfig, StageExecutionResult, WorkflowConfig, WorkflowStage } from "./types";
 
+/** Thrown when a stage's test/validation command fails. Carries the artifacts
+ *  and command output from that stage so the fixer has full context. */
+export class StageCommandFailureError extends Error {
+  constructor(
+    message: string,
+    public readonly createdArtifacts: string[],
+    public readonly commandOutput: string,
+  ) {
+    super(message);
+    this.name = "StageCommandFailureError";
+  }
+}
+
 function artifactFileName(artifact: string, feature: string): string {
   const safeFeature = feature.replace(/[^a-zA-Z0-9_-]+/g, "_");
   const mapping: Record<string, string> = {
@@ -46,11 +59,20 @@ interface RoleCommandResult {
   failed: boolean;
 }
 
+/** Re-runs the test command associated with a given role after a fixer has applied changes. */
+export async function rerunCommandForRole(config: LoadedProjectConfig, role: string): Promise<RoleCommandResult | undefined> {
+  const stageShim = { role } as WorkflowStage;
+  return runRoleCommand(config, stageShim);
+}
+
 async function runRoleCommand(config: LoadedProjectConfig, stage: WorkflowStage): Promise<RoleCommandResult | undefined> {
   let command: string | undefined;
   switch (stage.role) {
     case "backend_tester":
       command = config.manifest.backend_test_command;
+      break;
+    case "frontend_tester":
+      command = config.manifest.frontend_test_command;
       break;
     case "ui_tester":
       command = config.manifest.ui_e2e_test_command;
@@ -155,9 +177,14 @@ export async function executeStage(
     console.log(`  wrote: ${relativePath}`);
   }
 
-  // Throw after writing artifacts so the fixer stage has the test report as context.
+  // Throw after writing artifacts. StageCommandFailureError carries createdArtifacts + commandOutput
+  // so run-workflow.ts can pass them as prior context to the synthetic fixer stage.
   if (commandResult?.failed) {
-    throw new Error(`Command failed for stage '${stage.id}'. See command output and test report for details.`);
+    throw new StageCommandFailureError(
+      `Command failed for stage '${stage.id}'. See command output and test report for details.`,
+      [...stageArtifacts, ...writtenFiles],
+      commandResult.output,
+    );
   }
 
   return {

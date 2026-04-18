@@ -247,7 +247,7 @@ export function parseStructuredModelResponse(text: string): { summary: string; a
 
   // Strategy 1: Try extractJsonObject + JSON.parse (works for clean JSON)
   try {
-    payload = JSON.parse(extractJsonObject(text)) as { summary?: string; artifacts?: Record<string, string> };
+    payload = JSON.parse(extractJsonObject(text)) as { summary?: string; artifacts?: Record<string, string>; project_files?: Record<string, string> };
   } catch {
     // Strategy 2: Try regex-based key extraction for malformed JSON
     // (handles unescaped newlines / markdown inside string values)
@@ -284,9 +284,33 @@ export function parseStructuredModelResponse(text: string): { summary: string; a
               artifacts[key] = raw;
             }
           }
+
+          // Extract project_files object using the same brace-counting approach
+          let projectFiles: Record<string, string> = {};
+          const pfMatch = text.match(/"project_files"\s*:\s*\{/);
+          if (pfMatch) {
+            const pfStart = text.indexOf(pfMatch[0]);
+            const pfObjStart = text.indexOf("{", pfStart);
+            let pfDepth = 0; let pfInStr = false; let pfEsc = false; let pfEnd = -1;
+            for (let i = pfObjStart; i < text.length; i++) {
+              const c = text[i];
+              if (pfEsc) { pfEsc = false; continue; }
+              if (c === "\\") { pfEsc = true; continue; }
+              if (c === '"') { pfInStr = !pfInStr; continue; }
+              if (!pfInStr) {
+                if (c === "{") pfDepth++;
+                else if (c === "}") { pfDepth--; if (pfDepth === 0) { pfEnd = i; break; } }
+              }
+            }
+            if (pfEnd > 0) {
+              try { projectFiles = JSON.parse(text.slice(pfObjStart, pfEnd + 1)) as Record<string, string>; } catch { /* best effort */ }
+            }
+          }
+
           payload = {
             summary: summaryMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"'),
             artifacts,
+            project_files: projectFiles,
           };
         }
       }

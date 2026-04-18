@@ -1,6 +1,6 @@
 import path from "node:path";
 import { ensureDir, writeTextFile } from "../lib/fs-utils";
-import { executeStage } from "../lib/stage-executor";
+import { executeStage, StageCommandFailureError, rerunCommandForRole } from "../lib/stage-executor";
 import { loadProjectConfig, loadWorkflow } from "../lib/yaml-config";
 import { normalizeProjectPath } from "../lib/paths";
 import { validateProject } from "../lib/validate";
@@ -103,6 +103,11 @@ async function runStage(
       );
     }
 
+    // Pull artifacts and command output from the failed stage (if available) so the
+    // fixer has the test report and written files as prior context.
+    const failedArtifacts = err instanceof StageCommandFailureError ? err.createdArtifacts : [];
+    const failedCommandOutput = err instanceof StageCommandFailureError ? err.commandOutput : undefined;
+
     console.log(
       `Stage '${stage.id}' failed (${String(err)}). Routing to fixer role '${fixerRole}'.`,
     );
@@ -117,7 +122,16 @@ async function runStage(
       on_failure: "stop",
     };
 
-    const fixerResult = await executeStage(config, workflow, fixerStage, feature, { dryRun }, relevantArtifacts);
+    // Give the fixer: ancestor artifacts + failed stage's test report + written files.
+    const fixerContext = [...relevantArtifacts, ...failedArtifacts];
+    if (failedCommandOutput) {
+      // Write command output as a temp artifact file so loadPriorArtifacts can include it.
+      const cmdOutputPath = path.join(runDir, `${stage.id}_command_output.txt`);
+      await writeTextFile(cmdOutputPath, `# Command Output: ${stage.id}\n\n${failedCommandOutput}`);
+      fixerContext.push(cmdOutputPath);
+    }
+
+    const fixerResult = await executeStage(config, workflow, fixerStage, feature, { dryRun }, fixerContext);
     if (fixerResult.writtenFiles.length > 0) {
       console.log(`  Stage '${fixerStage.id}' wrote ${fixerResult.writtenFiles.length} project file(s).`);
     }
@@ -126,6 +140,18 @@ async function runStage(
     const fixerSummaryPath = path.join(runDir, `${fixerStage.id}.md`);
     await writeTextFile(fixerSummaryPath, fixerSummary);
     summaries.push(fixerSummaryPath);
+    // Re-run the original stage's test command to validate the fix.
+    if (!dryRun) {
+      const rerun = await rerunCommandForRole(config, stage.role);
+      if (rerun) {
+        if (rerun.failed) {
+          console.log(`  Tests still failing after fixer for '${stage.id}'. Workflow continues but fixes may be incomplete.`);
+        } else {
+          console.log(`  Tests passed after fixer for '${stage.id}'.`);
+        }
+      }
+    }
+
     // Record fixer artifacts in the map so downstream transitive scoping picks them up.
     stageArtifactMap.set(fixerStage.id, fixerResult.createdArtifacts);
     return fixerResult.createdArtifacts;

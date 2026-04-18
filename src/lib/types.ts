@@ -47,7 +47,6 @@ export interface ModelsConfig {
 
 export interface RoleDefinition {
   skills: string[];
-  reads_project_files?: boolean;
   writes_artifacts?: string[];
   allowed_workflows?: string[];
 }
@@ -73,6 +72,7 @@ export interface WorkflowConfig {
   schema_version: number;
   workflow_id: string;
   description: string;
+  caveman?: { mode?: string; notes?: string };
   stages: WorkflowStage[];
 }
 
