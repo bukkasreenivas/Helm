@@ -41,7 +41,12 @@ async function loadPriorArtifacts(createdArtifacts: string[]): Promise<string[]>
   return sections;
 }
 
-async function runRoleCommand(config: LoadedProjectConfig, stage: WorkflowStage): Promise<string | undefined> {
+interface RoleCommandResult {
+  output: string;
+  failed: boolean;
+}
+
+async function runRoleCommand(config: LoadedProjectConfig, stage: WorkflowStage): Promise<RoleCommandResult | undefined> {
   let command: string | undefined;
   switch (stage.role) {
     case "backend_tester":
@@ -63,7 +68,10 @@ async function runRoleCommand(config: LoadedProjectConfig, stage: WorkflowStage)
 
   const result = await runCommand(command, config.repoRoot);
   const status = result.success ? "succeeded" : `failed (exit ${result.exitCode})`;
-  return `Command: ${command}\nStatus: ${status}\n\n${result.output}`;
+  return {
+    output: `Command: ${command}\nStatus: ${status}\n\n${result.output}`,
+    failed: !result.success,
+  };
 }
 
 export async function executeStage(
@@ -77,10 +85,10 @@ export async function executeStage(
   const primaryModel = config.manifest.role_overrides?.[stage.role] ?? config.models.roles[stage.role] ?? "unassigned";
   console.log(`\n### Stage: **${stage.id}** (role: ${stage.role}, model: ${primaryModel})\n`);
   const warnings: string[] = [];
-  const commandOutput = await runRoleCommand(config, stage);
+  const commandResult = await runRoleCommand(config, stage);
   const priorArtifactContents = await loadPriorArtifacts(createdArtifacts);
-  if (commandOutput) {
-    priorArtifactContents.push(`## Command Output\n${commandOutput.slice(0, 16000)}`);
+  if (commandResult) {
+    priorArtifactContents.push(`## Command Output\n${commandResult.output.slice(0, 16000)}`);
   }
 
   const { systemPrompt, userPrompt } = await buildPrompts(config, workflow, stage, feature, priorArtifactContents);
@@ -135,6 +143,11 @@ export async function executeStage(
     stageArtifacts.push(targetPath);
   }
 
+  // Throw after writing artifacts so the fixer stage has the test report as context.
+  if (commandResult?.failed) {
+    throw new Error(`Command failed for stage '${stage.id}'. See command output and test report for details.`);
+  }
+
   return {
     stageId: stage.id,
     role: stage.role,
@@ -143,6 +156,6 @@ export async function executeStage(
     summary,
     createdArtifacts: stageArtifacts,
     warnings,
-    commandOutput,
+    commandOutput: commandResult?.output,
   };
 }
