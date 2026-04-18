@@ -1,8 +1,8 @@
 {
   "name": "helm-agent-control",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Helm is a standalone agent control plane for configuring multi-model workflows, skills, and durable project artifacts.",
-  "main": "./dist-ext/extension/extension.js",
+  "main": "./dist-ext/extension.js",
   "bin": {
     "helm": "dist/cli.js"
   },
@@ -12,8 +12,10 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "build:ext": "tsc -p tsconfig.extension.json",
+    "build:ext": "node esbuild.js",
+    "build:ext:tsc": "tsc -p tsconfig.extension.json",
     "build:all": "npm run build && npm run build:ext",
+    "vsce:package": "npm run build:ext && npx @vscode/vsce package --no-git-tag-version --allow-missing-repository",
     "test": "vitest run",
     "start": "node dist/cli.js",
     "dev": "node dist/cli.js"
@@ -74,11 +76,6 @@
   "publisher": "bukkasreenivas",
   "author": "bukkasreenivas",
   "license": "MIT",
-  "files": [
-    "dist",
-    "dist-ext",
-    "packs"
-  ],
   "dependencies": {
     "commander": "^13.1.0",
     "yaml": "^2.8.1"
@@ -86,6 +83,7 @@
   "devDependencies": {
     "@types/node": "^22.15.2",
     "@types/vscode": "^1.90.0",
+    "esbuild": "^0.28.0",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2"
   }
