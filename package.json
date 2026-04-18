@@ -1,6 +1,6 @@
 {
   "name": "helm-agent-control",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Helm is a standalone agent control plane for configuring multi-model workflows, skills, and durable project artifacts.",
   "main": "./dist-ext/extension.js",
   "bin": {

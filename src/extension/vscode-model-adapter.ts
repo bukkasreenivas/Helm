@@ -9,10 +9,10 @@ import type { IModelExecutor, ModelExecutionRequest, ModelExecutionResponse } fr
 function resolveModelFamily(modelAlias: string): { vendor: string; family: string } | undefined {
   const alias = modelAlias.toLowerCase();
   if (alias.includes("sonnet") || (alias.startsWith("claude") && !alias.includes("haiku"))) {
-    return { vendor: "copilot", family: "claude-sonnet-4-5" };
+    return { vendor: "copilot", family: "claude-sonnet-4" };
   }
   if (alias.includes("haiku")) {
-    return { vendor: "copilot", family: "claude-haiku-3-5" };
+    return { vendor: "copilot", family: "claude-3.5-haiku" };
   }
   if (alias.includes("gpt")) {
     return { vendor: "copilot", family: "gpt-4o" };

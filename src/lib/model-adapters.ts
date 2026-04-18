@@ -243,14 +243,74 @@ export async function executeModel(request: ModelExecutionRequest): Promise<Mode
 }
 
 export function parseStructuredModelResponse(text: string): { summary: string; artifacts: Record<string, string> } {
-  let payload: { summary?: string; artifacts?: Record<string, string> };
+  let payload: { summary?: string; artifacts?: Record<string, string> } | undefined;
+
+  // Strategy 1: Try extractJsonObject + JSON.parse (works for clean JSON)
   try {
     payload = JSON.parse(extractJsonObject(text)) as { summary?: string; artifacts?: Record<string, string> };
   } catch {
-    throw new Error(
-      `Model returned non-JSON output. Expected {"summary":"...","artifacts":{...}}. Raw response (first 500 chars): ${text.slice(0, 500)}`,
-    );
+    // Strategy 2: Try regex-based key extraction for malformed JSON
+    // (handles unescaped newlines / markdown inside string values)
+    try {
+      const summaryMatch = text.match(/"summary"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+      const artifactsMatch = text.match(/"artifacts"\s*:\s*\{/);
+      if (summaryMatch && artifactsMatch) {
+        const artStart = text.indexOf(artifactsMatch[0]);
+        const artObjStart = text.indexOf("{", artStart);
+        let depth = 0; let inStr = false; let esc = false; let artEnd = -1;
+        for (let i = artObjStart; i < text.length; i++) {
+          const c = text[i];
+          if (esc) { esc = false; continue; }
+          if (c === "\\") { esc = true; continue; }
+          if (c === '"') { inStr = !inStr; continue; }
+          if (!inStr) {
+            if (c === "{") depth++;
+            else if (c === "}") { depth--; if (depth === 0) { artEnd = i; break; } }
+          }
+        }
+        if (artEnd > 0) {
+          const artJson = text.slice(artObjStart, artEnd + 1);
+          let artifacts: Record<string, string> = {};
+          try { artifacts = JSON.parse(artJson) as Record<string, string>; } catch {
+            // Extract keys and treat values as raw markdown
+            const keyMatches = [...artJson.matchAll(/"([a-zA-Z0-9_-]+)"\s*:\s*"/g)];
+            for (let k = 0; k < keyMatches.length; k++) {
+              const key = keyMatches[k][1];
+              const valStart = artJson.indexOf('"', keyMatches[k].index! + keyMatches[k][0].length - 1) + 1;
+              const nextKey = k + 1 < keyMatches.length ? keyMatches[k + 1].index! : artEnd;
+              let raw = artJson.slice(valStart, nextKey);
+              raw = raw.replace(/"\s*,?\s*$/, "").replace(/"\s*}\s*$/, "");
+              raw = raw.replace(/\\n/g, "\n").replace(/\\t/g, "\t").replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+              artifacts[key] = raw;
+            }
+          }
+          payload = {
+            summary: summaryMatch[1].replace(/\\n/g, "\n").replace(/\\"/g, '"'),
+            artifacts,
+          };
+        }
+      }
+    } catch { /* fall through to strategy 3 */ }
+
+    // Strategy 3: If model returned pure markdown (no JSON wrapper), wrap it
+    if (!payload) {
+      const trimmed = text.trim();
+      if (trimmed.startsWith("#") || trimmed.startsWith("```") || !trimmed.startsWith("{")) {
+        const headingMatch = trimmed.match(/^#\s+(.+)/m);
+        payload = {
+          summary: headingMatch ? headingMatch[1] : trimmed.slice(0, 500),
+          artifacts: { content: trimmed },
+        };
+      }
+    }
+
+    if (!payload) {
+      throw new Error(
+        `Model returned non-JSON output. Expected {"summary":"...","artifacts":{...}}. Raw response (first 500 chars): ${text.slice(0, 500)}`,
+      );
+    }
   }
+
   return {
     summary: payload.summary ?? "",
     artifacts: payload.artifacts ?? {},

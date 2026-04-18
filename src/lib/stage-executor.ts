@@ -75,6 +75,7 @@ export async function executeStage(
   createdArtifacts: string[],
 ): Promise<StageExecutionResult> {
   const primaryModel = config.manifest.role_overrides?.[stage.role] ?? config.models.roles[stage.role] ?? "unassigned";
+  console.log(`\n### Stage: **${stage.id}** (role: ${stage.role}, model: ${primaryModel})\n`);
   const warnings: string[] = [];
   const commandOutput = await runRoleCommand(config, stage);
   const priorArtifactContents = await loadPriorArtifacts(createdArtifacts);
@@ -100,7 +101,7 @@ export async function executeStage(
           systemPrompt,
           userPrompt,
           temperature: 0.2,
-          maxTokens: 6000,
+          maxTokens: 16000,
         });
 
         const parsed = parseStructuredModelResponse(response.text);

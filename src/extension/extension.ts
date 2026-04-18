@@ -125,15 +125,38 @@ function registerChatParticipant(
             return;
           }
           stream.markdown(
-            `Running **${parsed.workflow ?? "default"}** workflow for **${parsed.feature}**…\n\nProgress is shown in the *Helm Agent* output channel.`,
+            `Running **${parsed.workflow ?? "default"}** workflow for **${parsed.feature}**…\n\n`,
           );
-          output.show(true);
-          await runWorkflow(target, {
-            workflow: parsed.workflow,
-            feature: parsed.feature,
-            dryRun: false,
-          });
-          stream.markdown(`Workflow completed. Check the *Helm Agent* output channel and the \`helm-agent/runs\` folder for artifacts.`);
+          // Patch console.log to stream output to both the output channel and chat
+          const origLog = console.log;
+          const origErr = console.error;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const chatLog = (...args: any[]) => {
+            const msg = args.map(String).join(" ");
+            output.appendLine(msg);
+            stream.markdown(msg + "\n\n");
+          };
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const chatErr = (...args: any[]) => {
+            const msg = args.map(String).join(" ");
+            output.appendLine("[ERROR] " + msg);
+            stream.markdown("**Error:** " + msg + "\n\n");
+          };
+          console.log = chatLog;
+          console.error = chatErr;
+          try {
+            await runWorkflow(target, {
+              workflow: parsed.workflow,
+              feature: parsed.feature,
+              dryRun: false,
+            });
+            stream.markdown("\n\n---\n**Workflow completed.** Artifacts written to `helm-agent/runs/`.\n");
+          } catch (runErr) {
+            stream.markdown("\n\n---\n**Workflow failed:** " + String(runErr instanceof Error ? runErr.message : runErr) + "\n");
+          } finally {
+            console.log = origLog;
+            console.error = origErr;
+          }
           break;
         }
 

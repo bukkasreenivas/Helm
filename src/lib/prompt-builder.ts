@@ -108,7 +108,7 @@ export async function buildPrompts(
     `Current workflow: ${workflow.workflow_id}`,
     `Current stage: ${stage.id}`,
     `Current role: ${stage.role}`,
-    "Return ONLY valid JSON with this shape:",
+    "CRITICAL: Return ONLY valid JSON. All string values must have newlines escaped as \\n. Do NOT include raw line breaks inside JSON string values. Shape:",
     '{"summary":"short markdown summary","artifacts":{"artifact-id":"markdown content"}}',
     "If a stage has no required artifacts, return an empty artifacts object.",
     "Artifacts must be complete, production-ready markdown, not notes or placeholders.",
