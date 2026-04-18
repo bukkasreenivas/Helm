@@ -194,7 +194,6 @@ function registerChatParticipant(
   };
 
   const participant = vscode.chat.createChatParticipant("helm.agent", handler);
-  participant.iconPath = new vscode.ThemeIcon("rocket");
   context.subscriptions.push(participant);
 }
 
