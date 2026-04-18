@@ -17,23 +17,65 @@ Helm is repository-agnostic. It ships a default pack and supports optional overr
 
 ---
 
+## Getting Started
+
+Setup is two steps — one per machine, one per project.
+
+### Step 1 — Install the VS Code extension (once per machine)
+
+This gives you the `@helm` chat participant in Copilot Chat.
+
+```powershell
+# Clone Helm somewhere on your machine (outside any project)
+git clone https://github.com/bukkasreenivas/Helm.git C:\tools\Helm
+cd C:\tools\Helm
+
+# Install dependencies and build both CLI and extension
+npm install
+npm run build
+npm run build:ext
+
+# Package the extension
+npx @vscode/vsce package --no-dependencies --allow-missing-repository --allow-unused-files-pattern
+```
+
+Then in VS Code: `Ctrl+Shift+X` → `···` (three dots) → **Install from VSIX…** → select `helm-agent-control-0.1.0.vsix`.
+
+Reload VS Code. `@helm` will now turn blue in Copilot Chat.
+
+> **Note:** Do not use `code --install-extension` from VS Code's integrated terminal — it opens a new VS Code window instead of installing into the current one. Use **Install from VSIX…** from the Extensions panel instead.
+
+### Step 2 — Install the pack into a project (once per project)
+
+Open the project in VS Code, then in Copilot Chat:
+
+```
+@helm install
+```
+
+Or via `Ctrl+Shift+P` → **Helm: Install Agent**.
+
+This creates a `helm-agent/` folder in the project with all workflows, skills, and config. The VS Code extension stays installed globally and works across all projects automatically — only this step needs repeating per project.
+
+### Running a workflow
+
+Once installed, run any workflow from Copilot Chat:
+
+```
+@helm run enhancement for add-payment-gateway
+@helm run bugfix for login-redirect-issue
+@helm run review-only for release readiness
+```
+
+---
+
 ## VS Code Extension
 
 ### Installation
 
-Build the extension locally:
+See [Getting Started](#getting-started) above for the full install steps.
 
-```bash
-npm install
-npm run build:ext
-```
-
-Then press **F5** in VS Code to launch the Extension Development Host, or package and install the `.vsix`:
-
-```bash
-npx vsce package
-code --install-extension helm-agent-control-*.vsix
-```
+For development / debugging, press **F5** in VS Code to launch the Extension Development Host.
 
 The extension activates automatically when the workspace is opened or when `@helm` is used in Copilot Chat.
 
