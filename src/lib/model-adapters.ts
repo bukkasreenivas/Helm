@@ -45,12 +45,47 @@ function extractJsonObject(text: string): string {
   }
 
   const start = text.indexOf("{");
-  const end = text.lastIndexOf("}");
-  if (start >= 0 && end > start) {
-    return text.slice(start, end + 1);
+  if (start < 0) {
+    return text.trim();
   }
 
-  return text.trim();
+  // Count braces to find the matching closing brace
+  let braceCount = 0;
+  let inString = false;
+  let escapeNext = false;
+
+  for (let i = start; i < text.length; i++) {
+    const char = text[i];
+
+    if (escapeNext) {
+      escapeNext = false;
+      continue;
+    }
+
+    if (char === "\\") {
+      escapeNext = true;
+      continue;
+    }
+
+    if (char === '"') {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === "{") {
+        braceCount++;
+      } else if (char === "}") {
+        braceCount--;
+        if (braceCount === 0) {
+          return text.slice(start, i + 1);
+        }
+      }
+    }
+  }
+
+  // Fallback if no matching brace found
+  return text.slice(start).trim();
 }
 
 class MockAdapter implements ModelAdapter {
