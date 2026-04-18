@@ -7,6 +7,7 @@ import { validateProject } from "../lib/validate";
 import { loadYamlFile, writeYamlFile } from "../lib/yaml-config";
 import type { ManifestConfig } from "../lib/types";
 import { runWorkflow } from "./run-workflow";
+import pkg from "../../package.json";
 
 export async function installAgent(target: string, options: { force?: boolean; runBaseline?: boolean; pack?: string }): Promise<void> {
   const repoRoot = path.resolve(target);
@@ -35,6 +36,7 @@ export async function installAgent(target: string, options: { force?: boolean; r
   const manifest = await loadYamlFile<ManifestConfig>(manifestPath);
   manifest.root_path = repoRoot;
   manifest.pack_name = packName;
+  manifest.helm_version = pkg.version;
   await writeYamlFile(manifestPath, manifest);
 
   await ensureDir(normalizeProjectPath(repoRoot, manifest.technical_doc_root));

@@ -1,6 +1,7 @@
 export interface ManifestConfig {
   schema_version: number;
   pack_name?: string;
+  helm_version?: string;
   project_id: string;
   project_name: string;
   root_path: string;

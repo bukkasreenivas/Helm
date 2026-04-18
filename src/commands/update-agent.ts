@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import pkg from "../../package.json";
 import { copyDirectory, pathExists } from "../lib/fs-utils";
 import { resolveAgentControlRoot } from "../lib/paths";
 import { deepMerge } from "../lib/deep-merge";
@@ -32,6 +33,19 @@ export async function updateAgent(target: string): Promise<void> {
 
   const installedConfig = await loadInstalledConfigs(installedRoot);
   const packName = installedConfig.manifest.pack_name ?? "default";
+  const fromVersion = installedConfig.manifest.helm_version ?? "unknown";
+  console.log(`Updating pack '${packName}' from Helm ${fromVersion} → ${pkg.version}`);
+
+  // Warn if workflows or skills have been modified locally — they will be replaced.
+  for (const dir of ["workflows", "skills"]) {
+    const dirPath = path.join(installedRoot, dir);
+    if (await pathExists(dirPath)) {
+      const files = await fs.readdir(dirPath);
+      if (files.length > 0) {
+        console.log(`  Note: ${dir}/ will be replaced with pack defaults. Any local edits to helm-agent/${dir}/ will be lost.`);
+      }
+    }
+  }
 
   await fs.rm(backupRoot, { recursive: true, force: true });
   await copyDirectory(installedRoot, backupRoot);
@@ -47,6 +61,7 @@ export async function updateAgent(target: string): Promise<void> {
     const mergedModels = deepMerge(updatedPackConfig.models, installedConfig.models);
     const mergedRoles = deepMerge(updatedPackConfig.roles, installedConfig.roles);
     mergedManifest.pack_name = packName;
+    mergedManifest.helm_version = pkg.version;
     if (mergedManifest.run_artifact_root === "agent-control/runs") {
       mergedManifest.run_artifact_root = "helm-agent/runs";
     }
