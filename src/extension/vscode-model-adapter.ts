@@ -8,18 +8,49 @@ import type { IModelExecutor, ModelExecutionRequest, ModelExecutionResponse } fr
  */
 function resolveModelFamily(modelAlias: string): { vendor: string; family: string } | undefined {
   const alias = modelAlias.toLowerCase();
-  if (alias.includes("sonnet") || (alias.startsWith("claude") && !alias.includes("haiku"))) {
-    return { vendor: "copilot", family: "claude-sonnet-4" };
+
+  // Claude Sonnet variants
+  if (alias.includes("sonnet")) {
+    // Prefer exact version match, fallback to latest sonnet
+    if (alias.includes("4.6")) return { vendor: "copilot", family: "claude-sonnet-4.6" };
+    if (alias.includes("4.5")) return { vendor: "copilot", family: "claude-sonnet-4.5" };
+    return { vendor: "copilot", family: "claude-sonnet-4.6" };
   }
+
+  // Claude Opus variants
+  if (alias.includes("opus")) {
+    if (alias.includes("4.7")) return { vendor: "copilot", family: "claude-opus-4.7" };
+    if (alias.includes("4.6")) return { vendor: "copilot", family: "claude-opus-4.6" };
+    return { vendor: "copilot", family: "claude-opus-4.6" };
+  }
+
+  // Claude Haiku variants
   if (alias.includes("haiku")) {
-    return { vendor: "copilot", family: "claude-3.5-haiku" };
+    return { vendor: "copilot", family: "claude-haiku-4.5" };
   }
+
+  // Generic claude — default to sonnet
+  if (alias.startsWith("claude")) {
+    return { vendor: "copilot", family: "claude-sonnet-4.6" };
+  }
+
+  // GPT variants
   if (alias.includes("gpt")) {
-    return { vendor: "copilot", family: "gpt-4o" };
+    if (alias.includes("5.4")) return { vendor: "copilot", family: "gpt-5.4" };
+    if (alias.includes("5.3")) return { vendor: "copilot", family: "gpt-5.3-codex" };
+    if (alias.includes("5.2")) return { vendor: "copilot", family: "gpt-5.2" };
+    if (alias.includes("4o")) return { vendor: "copilot", family: "gpt-4o" };
+    return { vendor: "copilot", family: "gpt-5.4" };
   }
+
+  // Gemini variants
   if (alias.includes("gemini")) {
-    return { vendor: "copilot", family: "gemini-2.0-flash" };
+    if (alias.includes("3.1")) return { vendor: "copilot", family: "gemini-3.1-pro" };
+    if (alias.includes("2.5")) return { vendor: "copilot", family: "gemini-2.5-pro" };
+    if (alias.includes("flash")) return { vendor: "copilot", family: "gemini-3-flash" };
+    return { vendor: "copilot", family: "gemini-3.1-pro" };
   }
+
   return undefined;
 }
 
