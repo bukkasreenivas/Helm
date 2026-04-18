@@ -109,9 +109,11 @@ export async function buildPrompts(
     `Current stage: ${stage.id}`,
     `Current role: ${stage.role}`,
     "CRITICAL: Return ONLY valid JSON. All string values must have newlines escaped as \\n. Do NOT include raw line breaks inside JSON string values. Shape:",
-    '{"summary":"short markdown summary","artifacts":{"artifact-id":"markdown content"}}',
+    '{"summary":"short markdown summary","artifacts":{"artifact-id":"markdown content"},"project_files":{"relative/path/to/file.ts":"file content"}}',
     "If a stage has no required artifacts, return an empty artifacts object.",
     "Artifacts must be complete, production-ready markdown, not notes or placeholders.",
+    "Use project_files to write actual source or test files into the project. Keys are paths relative to the repo root. Values are complete file contents.",
+    "If your role does not write code files, omit project_files or return an empty object.",
   ].join("\n");
 
   const userPrompt = [

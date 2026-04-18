@@ -233,6 +233,7 @@ describe("run-workflow: transitive artifact scoping", () => {
           success: true,
           summary: `Mock: ${stage.id}`,
           createdArtifacts: [`/tmp/mock-${stage.id}.md`],
+          writtenFiles: [],
           warnings: [],
         };
       },
@@ -328,6 +329,7 @@ describe("run-workflow: transitive artifact scoping", () => {
           success: true,
           summary: `Mock: ${stage.id}`,
           createdArtifacts: [`/tmp/mock-${stage.id}.md`],
+          writtenFiles: [],
           warnings: [],
         };
       },

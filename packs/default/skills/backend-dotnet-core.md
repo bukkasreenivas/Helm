@@ -5,6 +5,15 @@
 - Preserve auth, tenant, storage, and schema behavior during migration.
 - Use DI consistently.
 
+## Writing Implementation Files
+
+Write actual source files into the project using `project_files`.
+Keys are paths relative to the repo root (e.g. `src/Services/OrderService.cs`).
+Each file must be complete and compilable — no placeholders or TODOs.
+
+- Follow existing namespace and folder conventions found in important_files
+- Write the full file content, not just the changed method
+
 ## Commit Messages
 
 Use **caveman-commit** format for all implementation commits:

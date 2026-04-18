@@ -242,8 +242,8 @@ export async function executeModel(request: ModelExecutionRequest): Promise<Mode
   return getAdapter(resolved.provider).execute({ ...request, model: resolved.modelId });
 }
 
-export function parseStructuredModelResponse(text: string): { summary: string; artifacts: Record<string, string> } {
-  let payload: { summary?: string; artifacts?: Record<string, string> } | undefined;
+export function parseStructuredModelResponse(text: string): { summary: string; artifacts: Record<string, string>; projectFiles: Record<string, string> } {
+  let payload: { summary?: string; artifacts?: Record<string, string>; project_files?: Record<string, string> } | undefined;
 
   // Strategy 1: Try extractJsonObject + JSON.parse (works for clean JSON)
   try {
@@ -314,5 +314,6 @@ export function parseStructuredModelResponse(text: string): { summary: string; a
   return {
     summary: payload.summary ?? "",
     artifacts: payload.artifacts ?? {},
+    projectFiles: payload.project_files ?? {},
   };
 }

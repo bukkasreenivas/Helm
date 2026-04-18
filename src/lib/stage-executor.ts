@@ -95,6 +95,7 @@ export async function executeStage(
 
   let summary = "Dry run completed.";
   let artifactContents: Record<string, string> = {};
+  let projectFileContents: Record<string, string> = {};
   let resolvedModel = primaryModel;
   if (!options.dryRun) {
     const candidates = process.env.HELM_MOCK_MODE === "true"
@@ -115,6 +116,7 @@ export async function executeStage(
         const parsed = parseStructuredModelResponse(response.text);
         summary = parsed.summary || `Stage ${stage.id} completed.`;
         artifactContents = parsed.artifacts;
+        projectFileContents = parsed.projectFiles;
         resolvedModel = candidate;
         if (candidate !== primaryModel) {
           warnings.push(`Primary model '${primaryModel}' failed. Fallback '${candidate}' was used.`);
@@ -143,6 +145,16 @@ export async function executeStage(
     stageArtifacts.push(targetPath);
   }
 
+  // Write project files (actual source/test files) back into the repo.
+  const writtenFiles: string[] = [];
+  for (const [relativePath, content] of Object.entries(projectFileContents)) {
+    const absolutePath = path.join(config.repoRoot, relativePath);
+    await ensureDir(path.dirname(absolutePath));
+    await writeTextFile(absolutePath, content);
+    writtenFiles.push(absolutePath);
+    console.log(`  wrote: ${relativePath}`);
+  }
+
   // Throw after writing artifacts so the fixer stage has the test report as context.
   if (commandResult?.failed) {
     throw new Error(`Command failed for stage '${stage.id}'. See command output and test report for details.`);
@@ -154,7 +166,8 @@ export async function executeStage(
     model: resolvedModel,
     success: true,
     summary,
-    createdArtifacts: stageArtifacts,
+    createdArtifacts: [...stageArtifacts, ...writtenFiles],
+    writtenFiles,
     warnings,
     commandOutput: commandResult?.output,
   };

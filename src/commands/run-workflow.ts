@@ -82,8 +82,11 @@ async function runStage(
 ): Promise<string[]> {
   try {
     const result = await executeStage(config, workflow, stage, feature, { dryRun }, relevantArtifacts);
+    if (result.writtenFiles.length > 0) {
+      console.log(`  Stage '${stage.id}' wrote ${result.writtenFiles.length} project file(s).`);
+    }
     const skills = config.roles.roles[stage.role]?.skills ?? [];
-    const stageSummary = buildStageSummary(workflow, stage, feature, result.model, skills, result.summary, dryRun);
+    const stageSummary = buildStageSummary(workflow, stage, feature, result.model, skills, result.summary, result.writtenFiles, dryRun);
     const summaryPath = path.join(runDir, `${stage.id}.md`);
     await writeTextFile(summaryPath, stageSummary);
     summaries.push(summaryPath);
@@ -115,8 +118,11 @@ async function runStage(
     };
 
     const fixerResult = await executeStage(config, workflow, fixerStage, feature, { dryRun }, relevantArtifacts);
+    if (fixerResult.writtenFiles.length > 0) {
+      console.log(`  Stage '${fixerStage.id}' wrote ${fixerResult.writtenFiles.length} project file(s).`);
+    }
     const fixerSkills = config.roles.roles[fixerRole]?.skills ?? [];
-    const fixerSummary = buildStageSummary(workflow, fixerStage, feature, fixerResult.model, fixerSkills, fixerResult.summary, dryRun);
+    const fixerSummary = buildStageSummary(workflow, fixerStage, feature, fixerResult.model, fixerSkills, fixerResult.summary, fixerResult.writtenFiles, dryRun);
     const fixerSummaryPath = path.join(runDir, `${fixerStage.id}.md`);
     await writeTextFile(fixerSummaryPath, fixerSummary);
     summaries.push(fixerSummaryPath);
@@ -133,9 +139,10 @@ function buildStageSummary(
   model: string,
   skills: string[],
   summary: string,
+  writtenFiles: string[],
   dryRun: boolean | undefined,
 ): string {
-  return [
+  const lines = [
     `# Stage Summary: ${stage.id}`,
     "",
     `- Workflow: ${workflow.workflow_id}`,
@@ -147,7 +154,11 @@ function buildStageSummary(
     "",
     "## Summary",
     summary,
-  ].join("\n");
+  ];
+  if (writtenFiles.length > 0) {
+    lines.push("", "## Written Files", ...writtenFiles.map((f) => `- ${f}`));
+  }
+  return lines.join("\n");
 }
 
 export async function runWorkflow(

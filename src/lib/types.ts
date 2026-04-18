@@ -91,6 +91,7 @@ export interface StageExecutionResult {
   success: boolean;
   summary: string;
   createdArtifacts: string[];
+  writtenFiles: string[];
   warnings: string[];
   commandOutput?: string;
 }
