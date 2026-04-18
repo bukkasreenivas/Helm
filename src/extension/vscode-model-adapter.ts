@@ -90,29 +90,32 @@ export function createVSCodeModelExecutor(): IModelExecutor {
       for (const model of models.slice(0, 3)) {
         try {
           const tokenSource = new vscode.CancellationTokenSource();
-          const response = await model.sendRequest(messages, {}, tokenSource.token);
-
-          let text = "";
-          let chunkCount = 0;
-          const timeoutPromise = new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error("Model response stream timeout after 5 minutes")), 300000)
-          );
+          const timeoutId = setTimeout(() => tokenSource.cancel(), 300000);
 
           try {
-            for await (const chunk of response.text) {
-              text += chunk;
-              chunkCount++;
-            }
-          } catch (err) {
-            // If we got at least one chunk, return what we have so far
-            if (chunkCount > 0 && text.length > 0) {
-              console.warn(`Model stream interrupted after ${chunkCount} chunks (${text.length} chars), returning partial response`);
-              return { text, raw: { modelId: model.id, modelFamily: model.family } };
-            }
-            throw err;
-          }
+            const response = await model.sendRequest(messages, {}, tokenSource.token);
 
-          return { text, raw: { modelId: model.id, modelFamily: model.family } };
+            let text = "";
+            let chunkCount = 0;
+
+            try {
+              for await (const chunk of response.text) {
+                text += chunk;
+                chunkCount++;
+              }
+            } catch (err) {
+              if (chunkCount > 0 && text.length > 0) {
+                console.warn(`Model stream interrupted after ${chunkCount} chunks (${text.length} chars), returning partial response`);
+                return { text, raw: { modelId: model.id, modelFamily: model.family } };
+              }
+              throw err;
+            }
+
+            return { text, raw: { modelId: model.id, modelFamily: model.family } };
+          } finally {
+            clearTimeout(timeoutId);
+            tokenSource.dispose();
+          }
         } catch (err) {
           lastError = err;
         }
