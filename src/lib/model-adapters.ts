@@ -157,6 +157,10 @@ class AnthropicAdapter implements ModelAdapter {
         system: request.systemPrompt,
         max_tokens: request.maxTokens ?? 4000,
         temperature: request.temperature ?? 0.2,
+        thinking: {
+          type: "enabled",
+          budget_tokens: 10000,
+        },
         messages: [{ role: "user", content: request.userPrompt }],
       }),
     });
@@ -165,8 +169,20 @@ class AnthropicAdapter implements ModelAdapter {
       throw new Error(`Anthropic request failed: ${response.status} ${await response.text()}`);
     }
 
-    const payload = await response.json() as { content?: Array<{ type: string; text?: string }> };
-    const text = (payload.content ?? []).filter((item) => item.type === "text").map((item) => item.text ?? "").join("\n");
+    const payload = await response.json() as { content?: Array<{ type: string; text?: string; thinking?: string }> };
+    const blocks = payload.content ?? [];
+    
+    // Extract and log thinking blocks
+    const thinkingBlocks = blocks.filter((item) => item.type === "thinking").map((item) => item.text ?? "");
+    if (thinkingBlocks.length > 0) {
+      console.log("\n[Model Thinking]");
+      thinkingBlocks.forEach((thinking) => console.log(thinking));
+    }
+    
+    // Extract text content
+    const textBlocks = blocks.filter((item) => item.type === "text").map((item) => item.text ?? "");
+    const text = textBlocks.join("\n");
+    
     return { text, raw: payload };
   }
 }
