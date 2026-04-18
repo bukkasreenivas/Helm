@@ -1,6 +1,9 @@
 schema_version: 1
 workflow_id: enhancement
 description: Architecture-first implementation flow with development, testing, review, product documentation, and release validation.
+caveman:
+  mode: full
+  notes: Full caveman mode across all stages. Orchestrator activates at run start and passes mode downstream.
 stages:
   - id: orchestrate
     role: orchestrator

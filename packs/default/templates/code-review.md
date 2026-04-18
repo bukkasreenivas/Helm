@@ -8,23 +8,13 @@
 
 ## Findings
 
+Format: `<file>:L<line>: <🔴 bug|🟡 risk|🔵 nit>: <problem>. <fix>.`
+
 ### Critical
-- File/module:
-- Issue:
-- Why it matters:
-- Recommended owner:
-- Verification step:
+<!-- 🔴 bug: broken behavior that will cause incident or regression -->
 
 ### Major
-- File/module:
-- Issue:
-- Why it matters:
-- Recommended owner:
-- Verification step:
+<!-- 🟡 risk: fragile, untested, or missing protection boundary -->
 
 ### Minor
-- File/module:
-- Issue:
-- Why it matters:
-- Recommended owner:
-- Verification step:
+<!-- 🔵 nit: style, naming, micro-optimisation — author can ignore -->

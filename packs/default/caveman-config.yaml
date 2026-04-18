@@ -1,0 +1,35 @@
+schema_version: 1
+# Caveman mode configuration for the default Helm pack.
+# Controls token-efficiency settings applied per role during workflow runs.
+# Override with env var: CAVEMAN_DEFAULT_MODE=lite|full|ultra|off
+
+caveman:
+  # Global default applied to any role not listed below.
+  # Values: lite | full | ultra | off
+  default_mode: lite
+
+  roles:
+    # Orchestrator sets the tone for the whole run — full compression.
+    orchestrator: full
+
+    # Architect outputs are human-reviewed; lite keeps them readable.
+    architect: lite
+
+    # Implementation roles use caveman-commit for output commit messages.
+    backend_dev: lite
+    frontend_dev: lite
+
+    # Testers emit structured pass/fail reports — lite is enough.
+    backend_tester: lite
+    ui_tester: lite
+
+    # Reviewer uses caveman-review one-liner format.
+    reviewer: lite
+
+    # Fixers iterate — full compression saves the most tokens here.
+    backend_fixer: full
+    frontend_fixer: full
+
+    # Product and release roles write human-facing content — lite only.
+    product_doc_writer: lite
+    release_validator: lite

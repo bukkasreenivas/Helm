@@ -1,6 +1,9 @@
 schema_version: 1
 workflow_id: bugfix
 description: Lightweight bugfix workflow with targeted implementation, testing, review, and validation.
+caveman:
+  mode: lite
+  notes: Lite mode preserves clarity for critical fixes. Fix loop uses full mode if on_failure routes to fixer.
 stages:
   - id: orchestrate
     role: orchestrator

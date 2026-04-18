@@ -29,12 +29,34 @@ node dist/cli.js run-workflow --target . --feature "my feature" --dry-run
 
 ## Available workflows
 
-| Workflow | Purpose |
-|---|---|
-| `enhancement` | Architecture → implementation → testing → review → product docs → release validation |
-| `bugfix` | Focused implementation and validation for bug fixes |
-| `project-baseline` | Repo overview, solution map, dependency map, skill recommendations |
-| `review-only` | Review and audit path only |
+| Workflow | Purpose | Caveman Mode |
+|---|---|---|
+| `enhancement` | Architecture → implementation → testing → review → product docs → release validation | full |
+| `bugfix` | Focused implementation and validation for bug fixes | lite |
+| `project-baseline` | Repo overview, solution map, dependency map, skill recommendations | lite |
+| `review-only` | Review and audit path only | lite (caveman-review format) |
+
+## Token Efficiency — Caveman Mode
+
+All workflows use caveman mode to reduce token usage by 60–75% while preserving technical accuracy.
+
+| Skill | Trigger | What it does |
+|---|---|---|
+| `caveman` | Orchestrator stage start | Activates compressed communication for entire run |
+| `caveman-commit` | Implementation stages | Generates terse Conventional Commits messages |
+| `caveman-review` | Review stages | One-liner PR comments: `L42: 🔴 bug: issue. fix.` |
+
+**Per-role modes** are configured in `caveman-config.yaml`:
+- `full` — orchestrator, fixers (compound savings across iterations)
+- `lite` — architect, developers, testers, product writer, release validator
+
+**Override** the default mode globally:
+```bash
+export CAVEMAN_DEFAULT_MODE=ultra   # maximum compression
+export CAVEMAN_DEFAULT_MODE=off     # disable caveman entirely
+```
+
+Or set `defaultMode` in `~/.config/caveman/config.json`.
 
 ## Managing this pack
 
@@ -60,6 +82,7 @@ node dist/cli.js uninstall-agent --target . --purge-runs
 | `manifest.yaml` | Durable output folders, artifact root |
 | `models.yaml` | Role-to-model mapping and fallback table |
 | `roles.yaml` | Role definitions (architect, developer, tester, etc.) |
+| `caveman-config.yaml` | Caveman mode settings per role |
 | `workflows/` | Declarative workflow YAML files |
 | `skills/` | Skill instruction files injected into model prompts |
 | `templates/` | Output document templates |

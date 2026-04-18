@@ -5,24 +5,24 @@ roles:
   orchestrator: sonnet-4.6
   architect: sonnet-4.6
   backend_dev: haiku-4.6
-  frontend_dev: haiku-4.6
+  frontend_dev: gemini-3.1-pro
   backend_tester: haiku-4.6
-  ui_tester: haiku-4.6
-  reviewer: sonnet-4.6
+  ui_tester: gemini-3.1-pro
+  reviewer: gpt-5.4
   backend_fixer: haiku-4.6
   frontend_fixer: haiku-4.6
-  product_doc_writer: sonnet-4.6
+  product_doc_writer: gpt-5.4
   release_validator: sonnet-4.6
 fallbacks:
   # If the assigned model is unavailable, fall back to the other tier.
   orchestrator: haiku-4.6
-  architect: haiku-4.6
+  architect: gpt-5.4
   backend_dev: sonnet-4.6
-  frontend_dev: sonnet-4.6
+  frontend_dev: gpt-5.4
   backend_tester: sonnet-4.6
   ui_tester: sonnet-4.6
-  reviewer: haiku-4.6
+  reviewer: sonnet-4.6
   backend_fixer: sonnet-4.6
   frontend_fixer: sonnet-4.6
-  product_doc_writer: haiku-4.6
+  product_doc_writer: sonnet-4.6
   release_validator: haiku-4.6
