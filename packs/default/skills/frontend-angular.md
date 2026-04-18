@@ -4,6 +4,16 @@
 - Preserve user-facing parity during migration.
 - Keep code accessible, testable, and Playwright-friendly.
 
+## Writing Implementation Files
+
+Write actual source files into the project using `project_files`.
+Keys are paths relative to the repo root (e.g. `src/app/auth/login.component.ts`).
+Each file must be complete and compilable — no placeholders or TODOs.
+
+- Follow existing module/component naming conventions found in important_files
+- Write the full file content, not just the changed block
+- Include the corresponding `.html` template if creating a new component
+
 ## Commit Messages
 
 Use **caveman-commit** format for all implementation commits:

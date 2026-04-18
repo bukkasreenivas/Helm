@@ -4,6 +4,11 @@
 - Apply minimal root-cause fixes.
 - Re-run the relevant tests after changes.
 
+## Writing Fix Files
+
+Write the fixed source or test files into the project using `project_files`.
+Keys are paths relative to the repo root. Write the complete file — not just the diff.
+
 ## Caveman Mode
 
 Activate **caveman-full** mode for all fix iterations. Token savings compound across retries.
