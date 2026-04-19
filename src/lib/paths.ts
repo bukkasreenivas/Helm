@@ -4,7 +4,7 @@ export const HELM_AGENT_DIR_NAME = "helm-agent";
 export const LEGACY_AGENT_DIR_NAME = "agent-control";
 
 export function resolvePacksRoot(): string {
-  return path.resolve(__dirname, "..", "..", "packs");
+  return process.env.HELM_PACKS_ROOT ?? path.resolve(__dirname, "..", "..", "packs");
 }
 
 export function resolvePackRoot(packName = "default"): string {

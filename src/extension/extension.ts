@@ -127,7 +127,9 @@ function registerChatParticipant(
           stream.markdown(
             `Running **${parsed.workflow ?? "default"}** workflow for **${parsed.feature}**…\n\n`,
           );
-          // Patch console.log to stream output to both the output channel and chat
+          // Patch console.log to stream output to both the output channel and chat.
+          // stream.progress() updates the live spinner text so the user sees activity
+          // even during long LLM calls that produce no other output.
           const origLog = console.log;
           const origErr = console.error;
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -135,6 +137,7 @@ function registerChatParticipant(
             const msg = args.map(String).join(" ");
             output.appendLine(msg);
             stream.markdown(msg + "\n\n");
+            stream.progress(msg.replace(/\n/g, " ").slice(0, 120));
           };
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const chatErr = (...args: any[]) => {
@@ -225,6 +228,10 @@ function registerChatParticipant(
 // ---------------------------------------------------------------------------
 
 export function activate(context: vscode.ExtensionContext): void {
+  // Point pack resolution to the bundled packs/ directory inside the extension.
+  // Must be set before any Helm command runs, since resolvePacksRoot() reads this.
+  process.env.HELM_PACKS_ROOT = path.join(context.extensionPath, "packs");
+
   // Register the VS Code model executor — all model calls will go through
   // vscode.lm (Copilot) instead of direct HTTP, so no API keys are required.
   registerModelExecutor(createVSCodeModelExecutor());
