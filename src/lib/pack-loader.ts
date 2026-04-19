@@ -1,8 +1,8 @@
 import path from "node:path";
-import { pathExists, copyDirectory } from "./fs-utils";
+import { pathExists } from "./fs-utils";
 import { resolvePackRoot } from "./paths";
 import { deepMerge } from "./deep-merge";
-import { loadYamlFile, writeYamlFile } from "./yaml-config";
+import { loadYamlFile } from "./yaml-config";
 import type { ManifestConfig, ModelsConfig, PackDefinition, RolesConfig } from "./types";
 
 async function loadPackDefinition(packName: string): Promise<PackDefinition> {
@@ -71,22 +71,3 @@ export async function composePackConfig(packName: string): Promise<{ manifest: M
   return { manifest, models, roles };
 }
 
-export async function materializePack(packName: string, destinationRoot: string): Promise<void> {
-  const chain = await resolvePackChain(packName);
-  await copyDirectory(resolvePackRoot(chain[0]), destinationRoot);
-
-  const composed = await composePackConfig(packName);
-  await writeYamlFile(path.join(destinationRoot, "manifest.yaml"), composed.manifest);
-  await writeYamlFile(path.join(destinationRoot, "models.yaml"), composed.models);
-  await writeYamlFile(path.join(destinationRoot, "roles.yaml"), composed.roles);
-
-  for (const currentName of chain.slice(1)) {
-    const packRoot = resolvePackRoot(currentName);
-    for (const relativePath of ["workflows", "skills", "templates", "scripts", "README.md", "VERSION"]) {
-      const source = path.join(packRoot, relativePath);
-      if (await pathExists(source)) {
-        await copyDirectory(source, path.join(destinationRoot, relativePath));
-      }
-    }
-  }
-}

@@ -202,7 +202,7 @@ export async function runWorkflow(
 
   const config = await loadProjectConfig(repoRoot);
   const workflowId = options.workflow ?? config.manifest.default_workflow;
-  const workflow = await loadWorkflow(config.agentControlRoot, workflowId);
+  const workflow = await loadWorkflow(config.agentControlRoot, workflowId, config.projectConfigRoot);
   const runId = `${new Date().toISOString().replace(/[:.]/g, "-")}_${workflowId}_${options.feature.replace(/[^a-zA-Z0-9_-]+/g, "_")}`;
   const runDir = normalizeProjectPath(repoRoot, path.join(config.manifest.run_artifact_root, runId));
   await ensureDir(runDir);

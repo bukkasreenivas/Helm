@@ -2,10 +2,10 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { updateAgent } from "../commands/update-agent";
-import { composePackConfig, materializePack, resolvePackChain } from "../lib/pack-loader";
-import { loadYamlFile, writeYamlFile } from "../lib/yaml-config";
-import type { ManifestConfig, RolesConfig } from "../lib/types";
+import { installAgent } from "../commands/install-agent";
+import { composePackConfig, resolvePackChain } from "../lib/pack-loader";
+import { loadYamlFile } from "../lib/yaml-config";
+import type { ManifestConfig, ModelsConfig } from "../lib/types";
 
 const tempRoots: string[] = [];
 
@@ -26,57 +26,51 @@ describe("pack-loader", () => {
     expect(composed.models.roles.architect).toBe("sonnet-4.6");
   });
 
-  it("materializes merged config and override skills", async () => {
-    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-pack-"));
-    tempRoots.push(tempRoot);
-    const destination = path.join(tempRoot, "helm-agent");
-
-    await materializePack("webapp", destination);
-
-    const manifest = await loadYamlFile<ManifestConfig>(path.join(destination, "manifest.yaml"));
-    const roles = await loadYamlFile<RolesConfig>(path.join(destination, "roles.yaml"));
-
-    expect(manifest.project_name).toBe("Sample Web Application");
-    expect(manifest.pack_name).toBe("webapp");
-    expect(roles.roles.architect.skills).toContain("skills/webapp-delivery-context.md");
-  });
-
-  it("preserves installed config overrides during update", async () => {
-    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-update-"));
+  it("install creates only the three config files — no skills or workflows copied", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-install-"));
     tempRoots.push(tempRoot);
     const repoRoot = path.join(tempRoot, "repo");
-    const agentControlRoot = path.join(repoRoot, "agent-control");
-
     await fs.mkdir(repoRoot, { recursive: true });
-    await materializePack("default", agentControlRoot);
 
-    const manifestPath = path.join(agentControlRoot, "manifest.yaml");
-    const modelsPath = path.join(agentControlRoot, "models.yaml");
+    await installAgent(repoRoot, { pack: "default" });
 
-    const manifest = await loadYamlFile<ManifestConfig>(manifestPath);
-    manifest.root_path = repoRoot;
-    manifest.project_id = "custom-project";
-    manifest.project_name = "Custom Project";
-    manifest.pack_name = "default";
-    await writeYamlFile(manifestPath, manifest);
+    const agentRoot = path.join(repoRoot, "helm-agent");
 
-    const models = await loadYamlFile<{ schema_version: number; roles: Record<string, string>; fallbacks?: Record<string, string> }>(modelsPath);
+    // Config files must exist
+    await expect(fs.access(path.join(agentRoot, "manifest.yaml"))).resolves.not.toThrow();
+    await expect(fs.access(path.join(agentRoot, "models.yaml"))).resolves.not.toThrow();
+    await expect(fs.access(path.join(agentRoot, "roles.yaml"))).resolves.not.toThrow();
+
+    // Skills and workflows must NOT be copied — they live in the Helm tool
+    await expect(fs.access(path.join(agentRoot, "skills"))).rejects.toThrow();
+    await expect(fs.access(path.join(agentRoot, "workflows"))).rejects.toThrow();
+
+    const manifest = await loadYamlFile<ManifestConfig>(path.join(agentRoot, "manifest.yaml"));
+    expect(manifest.root_path).toBe(repoRoot);
+    expect(manifest.pack_name).toBe("default");
+    expect(manifest.helm_version).toBeDefined();
+  });
+
+  it("install --force reinitialises an existing project without error", async () => {
+    const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-install-"));
+    tempRoots.push(tempRoot);
+    const repoRoot = path.join(tempRoot, "repo");
+    await fs.mkdir(repoRoot, { recursive: true });
+
+    await installAgent(repoRoot, { pack: "default" });
+
+    // Customise models.yaml
+    const modelsPath = path.join(repoRoot, "helm-agent", "models.yaml");
+    const models = await loadYamlFile<ModelsConfig>(modelsPath);
     models.roles.architect = "gpt-5.4";
+    const { writeYamlFile } = await import("../lib/yaml-config");
     await writeYamlFile(modelsPath, models);
 
-    await updateAgent(repoRoot);
+    // Re-install with --force should succeed and reset config to defaults
+    await expect(installAgent(repoRoot, { pack: "default", force: true })).resolves.not.toThrow();
 
-    const migratedRoot = path.join(repoRoot, "helm-agent");
-
-    const updatedManifest = await loadYamlFile<ManifestConfig>(path.join(migratedRoot, "manifest.yaml"));
-    const updatedModels = await loadYamlFile<{ schema_version: number; roles: Record<string, string> }>(path.join(migratedRoot, "models.yaml"));
-
-    expect(updatedManifest.project_id).toBe("custom-project");
-    expect(updatedManifest.project_name).toBe("Custom Project");
-    expect(updatedManifest.root_path).toBe(repoRoot);
-    expect(updatedManifest.pack_name).toBe("default");
-    expect(updatedManifest.run_artifact_root).toBe("helm-agent/runs");
-    expect(updatedModels.roles.architect).toBe("gpt-5.4");
-    await expect(fs.access(path.join(repoRoot, "agent-control"))).rejects.toThrow();
+    const resetModels = await loadYamlFile<ModelsConfig>(modelsPath);
+    // After force re-install, models are back to pack defaults
+    expect(resetModels.roles.architect).not.toBe("gpt-5.4");
   });
 });

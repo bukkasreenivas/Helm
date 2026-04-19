@@ -55,7 +55,7 @@ export async function validateProject(repoRoot: string): Promise<ValidationResul
 
   for (const workflowId of workflowsToCheck) {
     try {
-      const workflow = await loadWorkflow(config.agentControlRoot, workflowId);
+      const workflow = await loadWorkflow(config.agentControlRoot, workflowId, config.projectConfigRoot);
       for (const stage of workflow.stages) {
         if (!(stage.role in config.roles.roles)) {
           errors.push(`Workflow '${workflowId}' references undefined role '${stage.role}'`);
