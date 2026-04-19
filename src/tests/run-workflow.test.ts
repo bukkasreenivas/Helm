@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { runWorkflow } from "../commands/run-workflow.js";
-import { materializePack } from "../lib/pack-loader.js";
+import { composePackConfig } from "../lib/pack-loader.js";
 import { loadYamlFile, writeYamlFile } from "../lib/yaml-config.js";
 import * as stageExecutorModule from "../lib/stage-executor.js";
 import type { ManifestConfig, WorkflowConfig, LoadedProjectConfig, WorkflowStage, StageExecutionResult } from "../lib/types.js";
@@ -20,31 +20,32 @@ afterEach(async () => {
   await Promise.all(tempRoots.splice(0).map((root) => fs.rm(root, { recursive: true, force: true })));
 });
 
-async function createWorkflowRepo(workflowYaml: WorkflowConfig): Promise<{ repoRoot: string; agentControlRoot: string }> {
+async function createWorkflowRepo(workflowYaml: WorkflowConfig): Promise<{ repoRoot: string; projectConfigRoot: string }> {
   const tempRoot = await fs.mkdtemp(path.join(os.tmpdir(), "helm-workflow-"));
   tempRoots.push(tempRoot);
 
   const repoRoot = path.join(tempRoot, "repo");
-  const agentControlRoot = path.join(repoRoot, "helm-agent");
-  await fs.mkdir(repoRoot, { recursive: true });
-  await materializePack("default", agentControlRoot);
+  const projectConfigRoot = path.join(repoRoot, "helm-agent");
+  await fs.mkdir(projectConfigRoot, { recursive: true });
 
-  // Point manifest at this temp repo root so path validation passes.
-  const manifestPath = path.join(agentControlRoot, "manifest.yaml");
-  const manifest = await loadYamlFile<ManifestConfig>(manifestPath);
-  manifest.root_path = repoRoot;
-  manifest.project_id = "test-project";
-  manifest.project_name = "Test Project";
-  manifest.pack_name = "default";
-  manifest.default_workflow = workflowYaml.workflow_id;
-  manifest.product_doc_required = false;
-  await writeYamlFile(manifestPath, manifest);
+  // Write the three project config files (no skills/workflows from pack copied).
+  const composed = await composePackConfig("default");
+  composed.manifest.root_path = repoRoot;
+  composed.manifest.project_id = "test-project";
+  composed.manifest.project_name = "Test Project";
+  composed.manifest.pack_name = "default";
+  composed.manifest.default_workflow = workflowYaml.workflow_id;
+  composed.manifest.product_doc_required = false;
+  await writeYamlFile(path.join(projectConfigRoot, "manifest.yaml"), composed.manifest);
+  await writeYamlFile(path.join(projectConfigRoot, "models.yaml"), composed.models);
+  await writeYamlFile(path.join(projectConfigRoot, "roles.yaml"), composed.roles);
 
-  // Write the custom workflow yaml.
-  const workflowPath = path.join(agentControlRoot, "workflows", `${workflowYaml.workflow_id}.yaml`);
-  await writeYamlFile(workflowPath, workflowYaml);
+  // Write the custom workflow into the project's helm-agent/workflows/ override dir.
+  const workflowsDir = path.join(projectConfigRoot, "workflows");
+  await fs.mkdir(workflowsDir, { recursive: true });
+  await writeYamlFile(path.join(workflowsDir, `${workflowYaml.workflow_id}.yaml`), workflowYaml);
 
-  return { repoRoot, agentControlRoot };
+  return { repoRoot, projectConfigRoot };
 }
 
 // ---------------------------------------------------------------------------

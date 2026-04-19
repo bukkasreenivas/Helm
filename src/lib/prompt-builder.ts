@@ -47,8 +47,10 @@ async function gatherSkillContent(config: LoadedProjectConfig, stage: WorkflowSt
   const roleDefinition = config.roles.roles[stage.role];
   const sections: string[] = [];
   for (const skillPath of roleDefinition?.skills ?? []) {
-    const absoluteSkillPath = path.join(config.agentControlRoot, skillPath);
-    const content = await readOptionalFile(absoluteSkillPath);
+    // Project-level skill override takes precedence over pack default.
+    const projectSkillPath = path.join(config.projectConfigRoot, skillPath);
+    const packSkillPath = path.join(config.agentControlRoot, skillPath);
+    const content = (await readOptionalFile(projectSkillPath)) ?? (await readOptionalFile(packSkillPath));
     if (content) {
       sections.push(trimContent(`Skill: ${skillPath}`, content, 6000));
     }

@@ -79,7 +79,10 @@ export interface WorkflowConfig {
 
 export interface LoadedProjectConfig {
   repoRoot: string;
+  /** Pack root inside the Helm tool — source of skills, workflows, templates. */
   agentControlRoot: string;
+  /** Project's helm-agent/ directory — source of manifest, models, roles, and any local overrides. */
+  projectConfigRoot: string;
   manifest: ManifestConfig;
   models: ModelsConfig;
   roles: RolesConfig;
